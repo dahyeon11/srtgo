@@ -129,7 +129,7 @@ async function login(railType, debug = false) {
   }
   try {
     const RailClass = railType === 'SRT' ? SRT : Korail;
-    const rail = new RailClass(id, pw, { autoLogin: false, verbose: debug });
+    const rail = new RailClass(id, pw, { autoLogin: true, verbose: debug });
     await rail.init();
     if (!rail.isLogin) {
       console.log(chalk.yellow(`\n${railType} 로그인 실패. 다시 로그인 설정을 해주세요.`));
@@ -309,7 +309,7 @@ async function setLogin(railType = 'SRT', debug = false) {
 
   try {
     const RailClass = railType === 'SRT' ? SRT : Korail;
-    const rail = new RailClass(answers.id, answers.pass, { autoLogin: false, verbose: debug });
+    const rail = new RailClass(answers.id, answers.pass, { autoLogin: true, verbose: debug });
     await rail.init();
 
     if (rail.isLogin) {
