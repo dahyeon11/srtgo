@@ -247,18 +247,23 @@ async function setCard() {
     expire: config.get('card.expire') || '',
   };
 
+  const hasSaved = (field) => cardInfo[field] ? ' (저장됨, Enter로 유지)' : '';
+
   const answers = await inquirer.prompt([
-    { type: 'password', name: 'number', message: '신용카드 번호 (하이픈 제외)', default: cardInfo.number },
-    { type: 'password', name: 'password', message: '카드 비밀번호 앞 2자리', default: cardInfo.password },
-    { type: 'password', name: 'birthday', message: '생년월일 (YYMMDD) / 사업자등록번호', default: cardInfo.birthday },
-    { type: 'password', name: 'expire', message: '카드 유효기간 (YYMM)', default: cardInfo.expire },
+    { type: 'password', name: 'number', message: `신용카드 번호 (하이픈 제외)${hasSaved('number')}`, mask: '*' },
+    { type: 'password', name: 'password', message: `카드 비밀번호 앞 2자리${hasSaved('password')}`, mask: '*' },
+    { type: 'password', name: 'birthday', message: `생년월일 (YYMMDD) / 사업자등록번호${hasSaved('birthday')}`, mask: '*' },
+    { type: 'password', name: 'expire', message: `카드 유효기간 (YYMM)${hasSaved('expire')}`, mask: '*' },
   ]);
 
+  // 입력되지 않은 필드는 기존 값 유지
   for (const [key, value] of Object.entries(answers)) {
-    config.set(`card.${key}`, value);
+    if (value || !cardInfo[key]) {
+      config.set(`card.${key}`, value);
+    }
   }
   config.set('card.ok', '1');
-  console.log('카드 정보가 저장되었습니다.');
+  console.log(chalk.green('카드 정보가 저장되었습니다.'));
 }
 
 async function payCard(rail, reservation, debug = false) {
@@ -294,8 +299,13 @@ async function setLogin(railType = 'SRT', debug = false) {
 
   const answers = await inquirer.prompt([
     { type: 'input', name: 'id', message: `${railType} 계정 아이디 (멤버십 번호, 이메일, 전화번호)`, default: credentials.id },
-    { type: 'password', name: 'pass', message: `${railType} 계정 패스워드`, default: credentials.pass },
+    { type: 'password', name: 'pass', message: `${railType} 계정 패스워드${credentials.pass ? ' (저장됨, Enter로 유지)' : ''}`, mask: '*' },
   ]);
+
+  // 비밀번호가 입력되지 않았으면 기존 값 사용
+  if (!answers.pass && credentials.pass) {
+    answers.pass = credentials.pass;
+  }
 
   try {
     const RailClass = railType === 'SRT' ? SRT : Korail;
