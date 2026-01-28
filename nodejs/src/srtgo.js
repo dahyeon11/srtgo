@@ -127,10 +127,27 @@ async function login(railType, debug = false) {
     await setLogin(railType, debug);
     return login(railType, debug);
   }
-  const RailClass = railType === 'SRT' ? SRT : Korail;
-  const rail = new RailClass(id, pw, { autoLogin: false, verbose: debug });
-  await rail.init();
-  return rail;
+  try {
+    const RailClass = railType === 'SRT' ? SRT : Korail;
+    const rail = new RailClass(id, pw, { autoLogin: false, verbose: debug });
+    await rail.init();
+    if (!rail.isLogin) {
+      console.log(chalk.yellow(`\n${railType} 로그인 실패. 다시 로그인 설정을 해주세요.`));
+      config.delete(`${railType}.ok`);
+      await setLogin(railType, debug);
+      return login(railType, debug);
+    }
+    return rail;
+  } catch (err) {
+    console.log(chalk.red(`\n${railType} 로그인 중 오류 발생!`));
+    console.error(chalk.yellow(`에러: ${err.message}`));
+    if (debug && err.stack) {
+      console.error(chalk.gray(err.stack));
+    }
+    config.delete(`${railType}.ok`);
+    await setLogin(railType, debug);
+    return login(railType, debug);
+  }
 }
 
 // Menu functions
@@ -244,7 +261,7 @@ async function setCard() {
   console.log('카드 정보가 저장되었습니다.');
 }
 
-async function payCard(rail, reservation) {
+async function payCard(rail, reservation, debug = false) {
   if (config.get('card.ok')) {
     const birthday = config.get('card.birthday');
     try {
@@ -258,7 +275,11 @@ async function payCard(rail, reservation) {
         birthday.length === 6 ? 'J' : 'S'
       );
     } catch (e) {
-      console.error('결제 실패:', e.message);
+      console.log(chalk.red('결제 실패!'));
+      console.error(chalk.yellow(`에러: ${e.message}`));
+      if (debug && e.stack) {
+        console.error(chalk.gray(e.stack));
+      }
       return false;
     }
   }
@@ -280,12 +301,24 @@ async function setLogin(railType = 'SRT', debug = false) {
     const RailClass = railType === 'SRT' ? SRT : Korail;
     const rail = new RailClass(answers.id, answers.pass, { autoLogin: false, verbose: debug });
     await rail.init();
-    config.set(`${railType}.id`, answers.id);
-    config.set(`${railType}.pass`, answers.pass);
-    config.set(`${railType}.ok`, '1');
-    return true;
+
+    if (rail.isLogin) {
+      config.set(`${railType}.id`, answers.id);
+      config.set(`${railType}.pass`, answers.pass);
+      config.set(`${railType}.ok`, '1');
+      console.log(chalk.green(`\n${railType} 로그인 성공!`));
+      return true;
+    } else {
+      console.log(chalk.red(`\n${railType} 로그인 실패: 아이디 또는 비밀번호를 확인해주세요.`));
+      config.delete(`${railType}.ok`);
+      return false;
+    }
   } catch (err) {
-    console.error(err.message);
+    console.log(chalk.red(`\n${railType} 로그인 실패!`));
+    console.error(chalk.yellow(`에러: ${err.message}`));
+    if (debug && err.stack) {
+      console.error(chalk.gray(err.stack));
+    }
     config.delete(`${railType}.ok`);
     return false;
   }
@@ -449,7 +482,11 @@ async function reserve(railType = 'SRT', debug = false) {
         : { passengers: searchParams.passengers, includeNoSeats: searchParams.includeNoSeats, trainType: searchParams.trainType }
     );
   } catch (e) {
-    console.log(chalk.red.bgGreen('예약 가능한 열차가 없습니다') + '\n');
+    console.log(chalk.red('열차 검색 실패: 예약 가능한 열차가 없습니다'));
+    console.error(chalk.yellow(`에러: ${e.message}`));
+    if (debug && e.stack) {
+      console.error(chalk.gray(e.stack));
+    }
     return;
   }
 
@@ -503,10 +540,10 @@ async function reserve(railType = 'SRT', debug = false) {
     if (reserve.tickets && reserve.tickets.length) {
       msg += '\n' + reserve.tickets.map(t => t.toString()).join('\n');
     }
-    console.log(chalk.red.bgGreen(`\n\n🎫 🎉 예매 성공!!! 🎉 🎫\n${msg}\n`));
+    console.log(chalk.green(`\n\n🎫 🎉 예매 성공!!! 🎉 🎫\n${msg}\n`));
 
     if (pay && !reserve.isWaiting) {
-      const paid = await payCard(rail, reserve);
+      const paid = await payCard(rail, reserve, debug);
       if (paid) {
         console.log(chalk.green.bgRed('\n\n💳 ✨ 결제 성공!!! ✨ 💳\n\n'));
         msg += '\n결제 완료';
@@ -616,8 +653,11 @@ async function checkReservation(railType = 'SRT', debug = false) {
       reservations = isSrt ? await rail.getReservations() : await rail.reservations();
       tickets = isSrt ? [] : await rail.tickets();
     } catch (e) {
-      console.log(chalk.red.bgGreen('예약 내역을 가져오는데 실패했습니다') + '\n');
-      console.error(e.message);
+      console.log(chalk.red('예약 내역을 가져오는데 실패했습니다'));
+      console.error(chalk.yellow(`에러: ${e.message}`));
+      if (debug && e.stack) {
+        console.error(chalk.gray(e.stack));
+      }
       return;
     }
 
@@ -664,11 +704,17 @@ async function checkReservation(railType = 'SRT', debug = false) {
       }]);
 
       if (action === 1) {
-        const paid = await payCard(rail, selectedReservation);
+        const paid = await payCard(rail, selectedReservation, debug);
         if (paid) console.log(chalk.green.bgRed('\n\n💳 ✨ 결제 성공!!! ✨ 💳\n\n'));
       } else if (action === 2) {
-        await rail.cancel(selectedReservation);
-        console.log('예약이 취소되었습니다.');
+        try {
+          await rail.cancel(selectedReservation);
+          console.log(chalk.green('예약이 취소되었습니다.'));
+        } catch (e) {
+          console.log(chalk.red('예약 취소 실패!'));
+          console.error(chalk.yellow(`에러: ${e.message}`));
+          if (debug && e.stack) console.error(chalk.gray(e.stack));
+        }
       }
       return;
     }
@@ -684,9 +730,11 @@ async function checkReservation(railType = 'SRT', debug = false) {
         } else {
           await rail.cancel(selectedReservation);
         }
-        console.log('처리가 완료되었습니다.');
+        console.log(chalk.green('처리가 완료되었습니다.'));
       } catch (e) {
-        console.error('오류가 발생했습니다:', e.message);
+        console.log(chalk.red('처리 중 오류가 발생했습니다!'));
+        console.error(chalk.yellow(`에러: ${e.message}`));
+        if (debug && e.stack) console.error(chalk.gray(e.stack));
       }
       return;
     }
@@ -749,8 +797,9 @@ async function main(options) {
         // User pressed Ctrl+C
         continue;
       }
-      console.error('오류가 발생했습니다:', e.message);
-      if (debug) console.error(e.stack);
+      console.log(chalk.red('\n오류가 발생했습니다!'));
+      console.error(chalk.yellow(`에러: ${e.message}`));
+      if (debug && e.stack) console.error(chalk.gray(e.stack));
     }
   }
 }
