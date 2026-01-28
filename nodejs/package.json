@@ -1,0 +1,27 @@
+{
+  "name": "srtgo",
+  "version": "1.0.0",
+  "description": "SRTgo: K-Train Reservation Helper (Node.js)",
+  "type": "module",
+  "bin": {
+    "srtgo": "./src/srtgo.js"
+  },
+  "scripts": {
+    "start": "node src/srtgo.js"
+  },
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "conf": "^12.0.0",
+    "crypto-js": "^4.2.0",
+    "inquirer": "^9.2.0",
+    "node-fetch": "^3.3.0",
+    "node-telegram-bot-api": "^0.66.0",
+    "tough-cookie": "^4.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT",
+  "author": "DKim <lapis42@gmail.com>"
+}
