@@ -1,0 +1,166 @@
+/**
+ * maum.ai M2U 플랫폼, 대화 진행에 관련된 대화 관련 데이터 타입들 정의
+ *
+ * 여기에서는 사용자의 발화, 시스템 발화,
+ * 대화를 진행하는 데 필요한 모든 데이터 타입은 크게 몇가지 정의할 수 있다.
+ *
+ * <입력 형식>
+ *
+ * Utter : 사용자의 입력 메시지
+ * User : 사용자
+ * Device: 위치 정보
+ * Session: 세션 정보
+ * Location: 위치 정보
+ * Document: NLU 결과물
+ * Event: Directive에 대응하는 이벤트 구조
+ *
+ * <출력 형식>
+ * Speech : 응답 출력 메시지
+ * Card: 화면에 다양한 출력을 원하는 메시지
+ * Directive: 단말의 행동을 제어하는 메시지
+ * Meta: 단말의 동작에 필요한 부가 데이터
+ *
+ * namespace: maum.m2u.common
+ */
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+import "maum/common/lang.proto";
+import "maum/m2u/common/user.proto";
+import "maum/m2u/common/device.proto";
+import "maum/m2u/common/location.proto";
+
+
+package maum.m2u.common;
+
+// ----------------------------------------------------------------------
+// 사용자 발화: Utter
+// ----------------------------------------------------------------------
+
+/**
+ * 사용자의 입력 데이터
+ * 입력의 유형은 매우 다양할 수 있습니다.
+ */
+message Utter {
+  // 사용자의 입력 메시지
+  string utter = 1;
+
+  // 입력의 유형
+  enum InputType {
+    // STT를 통한 입력
+    SPEECH = 0;
+    // 타이핑에 의한 입력
+    KEYBOARD = 1;
+    // CARD 등에 지정된 텍스트를 보내는 경우
+    TOUTCH = 2;
+    // 이미지 인식의 결과를 보내는 경우, 이미지 애노테이션을 통한 처리
+    IMAGE = 3;
+    // OCR 이미지 인식의 결과를 보내는 경우
+    IMAGE_DOCUMENT = 4;
+    // 이미지 인식의 결과를 보내는 경우
+    VIDEO = 5;
+    // 세션을 생성하는 등의 최초 이벤트, 프로그램 등의 명시적인 이벤트로 처리하는 방식
+    OPEN_EVENT = 100;
+  }
+
+  // 입력 유형
+  InputType input_type = 2;
+
+  // 언어
+  maum.common.Lang lang = 3;
+
+  // 현재의 발화에 대한 추가적인 메시지가 존재할 수 있습니다.
+  // ETRI STT의 경우에는 이 메시지가 없습니다.
+  repeated string alt_utters = 4;
+
+  // 추가적인 입력 데이터
+  // IMAGE, IMAGE_DOCUMENT. VIDEO, EVENT의 경우
+  // 추가적인 데이터 메시지 데이터를 정의해서 보낼 수 있습니다.
+  // 이미지 문서 인식의 경우에는 JSON 형태의 meta 데이터를
+  // 여기에 담아서 넣어야 합니다.
+  //
+  // IntentFinder 분류 후  원문 발화에 대하여 대체 된 값이 존재하면 meta 영역에
+  // "replacement", replace message 정보를 meta_pair로 저장합니다.
+  //  예를 들어 "길동이한테 5만원보내줘."에 대한 replace 가 "별칭에게 5만원보내줘"로 이뤄졌을때
+  // 결과 예시)
+  // fields {
+  //    key : "replacements"
+  //    value { struct_value { key : "별칭", value { string_value : "길동이"} } }
+  // }
+  google.protobuf.Struct meta = 101;
+}
+
+/**
+ * 명시적으로 새로운 챗봇을 엽니다. 새로운 대화 세션을 생성합니다.
+ */
+message OpenUtter {
+  // 사용할 챗봇의 이름
+  string chatbot = 1;
+  // 언어
+  maum.common.Lang lang = 2;
+
+  // 초기에 보내줄 발화
+  // 기본적으로 빈 문자열이 필요하다.
+  string utter = 11;
+  // 추가적인 입력 데이터
+  // OPEN 시점에 대화 메시지 외에 추가할 데이터
+  google.protobuf.Struct meta = 101;
+}
+
+
+// ----------------------------------------------------------------------
+// 시스템 발화: Speech
+// ----------------------------------------------------------------------
+
+/**
+ * 응답으로 내보내는 발화 형태
+ */
+message Speech {
+  // 출력 언어
+  maum.common.Lang lang = 1;
+
+  // 화면에 출력해줄 발화문
+  string utter = 2;
+
+  //  TTS 출력을 위한 추가적인 데이터를 정의할 수 있도록 합니다.
+  // 이것이 정의되어 있지 않으면 위 발화문을 그대로 읽어준다.
+  string speech_utter = 3; // 안녕하세<hi>요</hi>
+
+  // 스피커 응답 대기
+  // 스피커의 응답을 바로 대기하도록 요청한다.
+  // map은 자동으로 ExepectSpeech Directive를 자동으로 발생시키도록 한다.
+  bool reprompt = 4;
+}
+
+
+// ----------------------------------------------------------------------
+// 세션: 세션 정보
+// ----------------------------------------------------------------------
+
+/**
+ * 세션 정보
+ *
+ * 세션의 ID와 에션에 속한 컨텍스트 정보를 모두 가지고 있다.
+ */
+message Session {
+  // 세션 ID
+  int64 id = 1;
+  // 세션의 컨텍스트 정보
+  google.protobuf.Struct context = 2;
+}
+
+/**
+ * 시스템 컨텍스트
+ *
+ * 시스템에서 정의된 컨텍스트 정보를 묶어서 하나로 표현합니다.
+ * User, Device, Location 정보를 묶어서 하나로 처리합니다.
+ */
+message SystemContext {
+  // 사용자
+  maum.m2u.common.User user = 1;
+  // 다비아스
+  maum.m2u.common.Device device = 2;
+  // 위치
+  maum.m2u.common.Location location = 3;
+}
+

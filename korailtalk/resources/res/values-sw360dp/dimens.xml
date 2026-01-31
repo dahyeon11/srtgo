@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="calendar_horizontal_margin">15dp</dimen>
+    <dimen name="calendar_vertical_margin">74dp</dimen>
+    <dimen name="cart_direction_text_size">16dp</dimen>
+    <dimen name="cart_train_name_text_size">18dp</dimen>
+    <dimen name="city_woorimore_cardnum_mmyy">15dp</dimen>
+    <dimen name="empty_image_top_margin">327.5dp</dimen>
+    <dimen name="favorite_card_setting_text_size">18dp</dimen>
+    <dimen name="favorite_edit_text_size">17dp</dimen>
+    <dimen name="mypage_certify_cell_margin">5dp</dimen>
+    <dimen name="mypage_count_cell_margin">5dp</dimen>
+    <dimen name="noticebar_height">30dp</dimen>
+    <dimen name="noticebar_text_size">14.1dp</dimen>
+    <dimen name="payment_card_text_size">16dp</dimen>
+    <dimen name="popup_message_size">17dp</dimen>
+    <dimen name="popup_title_size">21dp</dimen>
+    <dimen name="radio_button_text_size">17dp</dimen>
+    <dimen name="receipt_text_size">14dp</dimen>
+    <dimen name="train_inquiry_date">20dp</dimen>
+    <dimen name="train_service_info_left_margin_bottom_route">138.5dp</dimen>
+    <dimen name="train_service_info_left_margin_end_station">132dp</dimen>
+    <dimen name="train_service_info_left_margin_mid_station">135dp</dimen>
+    <dimen name="train_service_info_left_margin_off_station">125.5dp</dimen>
+    <dimen name="train_service_info_left_margin_on_station">125.5dp</dimen>
+    <dimen name="train_service_info_left_margin_start_station">132dp</dimen>
+    <dimen name="train_service_info_left_margin_top_route">138.5dp</dimen>
+</resources>

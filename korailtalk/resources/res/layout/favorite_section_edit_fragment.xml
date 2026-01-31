@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#fffafafa"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_above="@+id/saveBtn"
+        style="@style/ScrollbarBlue">
+        <LinearLayout
+            android:orientation="vertical"
+            android:id="@+id/optionsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </androidx.core.widget.NestedScrollView>
+    <com.korail.talk.view.CButton
+        android:id="@+id/saveBtn"
+        android:text="@string/common_save"
+        android:layout_alignParentBottom="true"
+        style="@style/ButtonBottomBlue"/>
+    <com.korail.talk.ui.booking.option.station.StationSearch
+        android:id="@+id/stationSearchView"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="84dp"
+        app:searchMode="favorite_station"/>
+</RelativeLayout>

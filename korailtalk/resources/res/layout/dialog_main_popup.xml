@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="center_vertical"
+    android:orientation="vertical"
+    android:background="@color/white_two"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <ImageView
+        android:id="@+id/iv_dialog_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scaleType="fitXY"
+        android:layout_weight="1"/>
+    <androidx.core.widget.NestedScrollView
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbarStyle="outsideInset"
+        android:id="@+id/nsv_dialog"
+        android:scrollbars="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="20dp"
+        android:overScrollMode="never"
+        android:layout_marginHorizontal="20dp">
+        <include
+            android:textSize="14dp"
+            android:textColor="#585858"
+            android:scrollbars="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            layout="@layout/include_dialog_message"/>
+    </androidx.core.widget.NestedScrollView>
+    <include
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="18dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="18dp"
+        android:layout_marginBottom="10dp"
+        android:layout_marginHorizontal="18dp"
+        android:layout_marginVertical="10dp"
+        layout="@layout/include_dialog_checkbox"/>
+    <include layout="@layout/include_dialog_bottom"/>
+</LinearLayout>

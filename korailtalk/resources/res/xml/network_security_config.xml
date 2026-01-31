@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">1.255.59.22
+        </domain>
+        <domain includeSubdomains="true">bot-dev-lb-100453984-927a54b5c9cb.kr-gov.lb.naverncp.com
+        </domain>
+    </domain-config>
+</network-security-config>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@color/white_two"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <ListView
+        android:layout_gravity="center"
+        android:id="@+id/popList"
+        android:padding="0dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="9dp"
+        android:overScrollMode="never"
+        style="@style/ScrollbarBlue"/>
+    <ImageView
+        android:layout_gravity="top|right"
+        android:id="@+id/toggleImg"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3.5dp"
+        android:src="0x7f080161"/>
+    <ImageView
+        android:id="@+id/selector_pop_bg"
+        android:background="@drawable/bg_drop_down_selector_pop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+</FrameLayout>

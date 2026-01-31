@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.korail.talk.view.CTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:textSize="15dp"
+    android:textColor="@color/ocean_blue"
+    android:gravity="center"
+    android:id="@+id/tv_search_header"
+    android:background="#ffe5e5e5"
+    android:paddingLeft="14dp"
+    android:paddingRight="14dp"
+    android:layout_width="match_parent"
+    android:layout_height="27dp"
+    android:minHeight="27dp"
+    android:maxLines="1"/>

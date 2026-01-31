@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="@color/colorPrimary"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <include layout="@layout/appbar"/>
+    <LinearLayout
+        android:orientation="vertical"
+        android:background="@color/white"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1">
+        <com.korail.talk.view.CTabLayout
+            android:id="@+id/tab_login"
+            android:layout_width="match_parent"
+            android:layout_height="51dp"
+            style="@style/CTabLayout"/>
+        <com.korail.talk.view.CustomViewPager
+            android:id="@+id/vp_login"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:overScrollMode="never"/>
+    </LinearLayout>
+    <include
+        android:id="@+id/ic_bn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        layout="@layout/include_bottom_navigation"/>
+</LinearLayout>

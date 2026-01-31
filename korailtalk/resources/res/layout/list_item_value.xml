@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/rootView"
+    android:layout_width="match_parent"
+    android:layout_height="64dp">
+    <LinearLayout
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:minHeight="64dp">
+        <com.korail.talk.view.CTextView
+            android:textSize="16.8dp"
+            android:textColor="#ff000000"
+            android:id="@+id/nameTxt"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"/>
+        <com.korail.talk.view.CTextView
+            android:textSize="15.2dp"
+            android:textColor="@color/brownish_grey"
+            android:id="@+id/valueTxt"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="V 0.0.0"/>
+    </LinearLayout>
+    <com.korail.talk.view.CCheckBox
+        android:textSize="16dp"
+        android:id="@+id/statusSwitch"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="12dp"
+        android:checked="false"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        style="@style/DiscountMenuSwitchCheckBox"/>
+</RelativeLayout>

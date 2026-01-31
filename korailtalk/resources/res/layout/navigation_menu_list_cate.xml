@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.korail.talk.view.CTextView
+        android:textSize="16.8dp"
+        android:textColor="#005799"
+        android:gravity="center"
+        android:id="@+id/cateMenuTxt"
+        android:background="@drawable/selector_list_item"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="61dp"
+        android:text="CategoryText"
+        android:drawableRight="@drawable/selector_arrow_gray"
+        android:layout_weight="1"/>
+</LinearLayout>

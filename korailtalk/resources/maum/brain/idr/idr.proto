@@ -1,0 +1,93 @@
+/**
+ * maum.ai BRAIN IDR에서 사용하는 공통 데이터 포맷 및 서비스
+ *
+ * 다음 기능을 포함한다.
+ * - Image Recognition: 화폐 인식
+ * - Image Annotation: 이미지에 대한 주석
+ * - Optical character recognition: 광학 문자 인식
+ *
+ * namespace: maum.brain.idr
+ */
+syntax = "proto3";
+import "maum/common/lang.proto";
+import "google/protobuf/struct.proto";
+
+option cc_enable_arenas = true;
+package maum.brain.idr;
+
+//
+// 이미지를 인식하여 데이터를 생성한다.
+//
+service ImageRecognitionService {
+  rpc RecognizeImage (stream RecognizeImageRequest) returns (ImageRecognitionResult);
+}
+
+
+/**
+ * 이미지 포맷
+ */
+enum ImageFormat {
+  JPEG = 0;
+  PNG = 1;
+  BMP = 2;
+  TIFF = 3;
+  PDF = 4;
+}
+
+/**
+ * Image Recognition Param 에 사용될 수 있는 파라미터.
+ */
+message ImageRecognitionParam {
+  // 출력 인코딩 포맷
+  ImageFormat image_format = 1;
+
+  // 출력 언어
+  maum.common.Lang lang = 2;
+
+  // 이미지 전체 가로 (px)
+  int32 width = 3;
+  // 이미지 전체 세로 (px)
+  int32 height = 4;
+
+  // App 에서 보내줄 guide 비율의 가로 값
+  float ref_vertex_x = 5;
+  // App 에서 보내줄 guide 비율의 세로 값
+  float ref_vertex_y = 6;
+  // 대칭형 crop (True), 비대칭형 crop (False)
+  bool symm_crop = 7;
+}
+
+/**
+ * 이미지 인식 요청
+ */
+message RecognizeImageRequest {
+  oneof data {
+    // 이미지 인식 파라미터 정보
+    ImageRecognitionParam param = 1;
+    // 이미지 데이터
+    bytes img_content = 2; // PART of IMAGE
+  }
+}
+
+
+/*
+ * 주의: Result로 표현되는 경우는 하나의 요청에 대한 응답으로만 동작하는 것이 아니라
+ * 다른 곳에 재전송할 수 있는 데이터 유형일 때이다.
+ */
+
+/**
+ * 이미지 인식 결과물
+ *
+ */
+message ImageRecognitionResult {
+  // 이미지 분류 표시
+  string image_class = 1;
+
+  // 인식된 결과물을 표현하는 텍스트 
+  repeated string annotated_texts = 2;
+
+  // 인식된 이미지로부터 표현가능한 다양한 정보
+  google.protobuf.Struct meta = 3;
+}
+
+

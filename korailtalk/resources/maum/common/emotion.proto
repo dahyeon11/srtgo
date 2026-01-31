@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package maum.common;
+
+enum Emotion{
+    NONE = 0;
+}

@@ -1,0 +1,287 @@
+/**
+ * maum.ai M2U MAP protocol 인증을 위한 데이터
+ *
+ * 인증 서비스 제공자는 크게 4가지 서비스를 제공해야 합니다.
+ * 1. 로그인
+ * 2. 로그아웃
+ * 3. IS VALID
+ * 4. GET USER INFO
+ *
+ * 인증과정에서 발급되는 토큰은 auth token입니다. auth의 의미는 authenticatiuon의
+ * 결과부여 받은 authorzation 을 위한 토큰이기도 합니다.
+ *
+ * 인증 토큰이 정상적인 경우에는 AccessToken을 별도로 발급 받습니다. 이 토큰을 기반으로
+ * 사용자 정보를 획득할 수 있습니다.
+ *
+ * namespace: maum.m2u.map
+ */
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/struct.proto";
+import "maum/m2u/common/user.proto";
+import "maum/m2u/common/device.proto";
+
+package maum.m2u.map;
+
+service AuthenticationProvider {
+  // 로그인
+  // 로그인 처리의 응답은 세가지 종류가 가능하다.
+  // (1) 인증의 성공 동시에 auth token을 반환하는 경우, USE ONE FACTOR AUTH
+  // (2) 인증의 성공 동시에 MULTI FACTOR 인증을 요구하고, 이에 대한 정보를 다시 전달해달라고
+  // 하는 경우
+  // (3) 인증의 실패와 동시에 인증 실패 메시지 전달 하는 구조
+  rpc SignIn (SignInPayload) returns (SignInResultPayload);
+  // MULTI FACTOR 인증에 대한 확인 요청
+  // 다중 요청에 대한 처리
+  rpc MultiFactorVerify (MultiFactorVerifyPayload) returns (SignInResultPayload);
+  // 로그아웃
+  rpc SignOut (SignOutPayload) returns (SignOutResultPayload);
+
+  // 사용자 속성 정의
+  // 인증된 사용자만 이 호출을 진행할 수 있다.
+  // 바꾸고 싶은 값만 넣을 수 있다.
+  // 응답으로는 모든 설정정보를 다 반환한다.
+  rpc UpdateUserSettings(UserSettings) returns (UserSettings);
+
+  // 사용자 속성 조회
+  // 인증된 사용자만 이 호출을 진행할 수 있다.
+  // 설정정보를 조회한다.
+  rpc GetUserSettings(UserKey) returns (UserSettings);
+}
+
+// 사용자 속성 조회를 위한 키
+message UserKey {
+  // 인증 토큰
+  string auth_token = 1;
+}
+
+// 사용자 속성 정의 데이터
+message UserSettings {
+  // 인증 토큰
+  string auth_token = 1;
+  // 사용자 속성
+  google.protobuf.Struct settings = 2;
+}
+
+
+
+/**
+ * 사용자를 확인하는 서비스
+ *
+ */
+service AuthorizationProvider {
+  // 토큰이 정상 여부 확인
+  rpc IsValid (IsValidRequest) returns (IsValidResponse);
+  // 토큰에 따른 사용자의 최종 정보를 반환한다.
+  rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoResponse);
+}
+
+
+/**
+ * 인증 파라미터
+ *
+ * - SignIn의 경우
+ * - MultiFactorVerify의 경우에도 동시에 사용한다.
+ */
+message AuthenticationParam {
+  // 인증 방법
+  string method = 1;
+  // 값
+  string value = 2;
+}
+
+
+/**
+ * 인증 페이로드
+ */
+message SignInPayload {
+  // 사용자 키
+  // 사용자를 구분할 수 있는 키
+  string userkey = 1;
+  // 비밀번호
+  string passphrase = 2;
+
+  // 각 인증 방법에 따른 인증 파라미터들
+  repeated AuthenticationParam auth_params = 3;
+
+  // 인증에 필요한 부가적인 디바이스 정보
+  // 인증은 기본적으로 사용자를 인증하기도 하지만
+  // DEVICE를 인증해야할 수도 있습니다.
+  maum.m2u.common.Device device = 4;
+}
+
+
+/**
+ * 인증 결과 PAYLOAD
+ *
+ * (1) 성공정인 인증 처리
+ * (2) 인증 실패
+ * (3) 멀티팩터 인증에 대한 처리
+ */
+message SignInResultPayload {
+  oneof test_result {
+    AuthTokenPayload auth_success = 1;
+    AuthFailurePayload auth_failure = 2;
+    MultiFactorAuthRequestPayload multi_factor_auth_request = 3;
+  }
+}
+
+/**
+ * 인증 성공 데이터
+ *
+ * 인증 성공 시점에 단말에 전달되는 데이터
+ * 단말은 인증 토콘을 저장해야 한다.
+ */
+message AuthTokenPayload {
+  // 인증 요청에 대한 결과
+  // 발급된 인증 토큰
+  string auth_token = 1;
+
+  // 이 인증 성공이 multi factor 인증의 결과물인가를 확인해준다.
+  bool multi_factor = 2;
+
+  // *optional*
+  // 기타 인증 클라이언트에서 필요로 하는 추가적인 데이터
+  google.protobuf.Struct meta = 3;
+}
+
+/**
+ * 인증 실패 페이로드
+ * 인증 싶패의 이유를 명시적으로 적시해준다.
+ */
+message AuthFailurePayload {
+  // 인증 실패 코드
+  string res_code = 1;
+  // 실패 메시지
+  string message = 2;
+  // 인증 실패하는 경우에 대한 상세 메시지
+  string detail_message = 3;
+}
+
+/**
+ * MULTI FACTOR 인증을 위한 추가적인 인증 밥업과
+ * 인증 방식을 정의합니다.
+ */
+message MultiFactorAuthRequestPayload {
+  // 다음 `MultiFactorVerifyPayload` 을 보낼 때,
+  // 함께 보내줘야 하는 ID
+  string temp_auth_token = 1;
+
+  // 다중 팩터
+  message MultiFactorAuthMethod {
+    // 추가적인 인증 요청 방식
+    string method = 1;
+    // 추가적인 인증 요청을 위한 사용자 정의 데이터
+    // 어떤 형식의 데이터도 처리할 수 있도록 Struct로 정의
+    google.protobuf.Struct param = 2;
+  }
+  // 다중요소 인증 방법들의 배열
+  // 서버에서 필요한 다양한 메시지가 정의될 수 있습니다.
+  repeated MultiFactorAuthMethod multi_factor_auth_methods = 2;
+
+  //
+}
+
+
+/**
+ * 서버에서 보내온 다중 팩터 요청에 대한 상세 데이터
+ * 클라이언트에서 서버로 다시 보내주는 정보입니다.
+ */
+message MultiFactorVerifyPayload {
+  // 서버에서 보내온 다음 인증을 위한 키 데이터
+  string temp_auth_token = 1;
+
+  // 각 인증 방법에 따른 인증 파라미터들
+  repeated AuthenticationParam auth_params = 2;
+
+  message MultiFactorAuthResult {
+    // 추가적인 인증 요청 방식
+    string method = 1;
+    //인증처리된 결과에 대한 값
+    string value = 2;
+    // 해당 값 이외에 추가적으로 정의하려고 하는
+    // 데이터 값,
+    google.protobuf.Struct meta = 3;
+  }
+
+  // 다중요소 인증 방법들의 배열
+  // 서버에서 필요한 다양한 메시지가 정의될 수 있습니다.
+  repeated MultiFactorAuthResult multi_factor_auth_results = 3;
+
+  // 인증에 필요한 부가적인 디바이스 정보
+  // 인증은 기본적으로 사용자를 인증하기도 하지만
+  // DEVICE를 인증해야할 수도 있습니다.
+  maum.m2u.common.Device device = 4;
+}
+
+/**
+ * 사인아웃 처리를 위한 페이로드
+ */
+message SignOutPayload {
+  // 인증 토큰
+  string auth_token = 1;
+  // 사용자 키 (optional)
+  string user_key = 2;
+}
+
+/**
+ * 응답 메시지
+ */
+message SignOutResultPayload {
+  // 로그아웃 후 응답 메시지
+  string message = 1;
+}
+
+
+/**
+ * 인증 토큰이 유효할 때
+ */
+message IsValidRequest {
+  string auth_token = 1;
+}
+
+/**
+ * 인증 토큰이 정상적인지 확인하는 과정을 거칩니다.
+ */
+message IsValidResponse {
+  // 인증 토큰이 정상적인지를 나타냅니다.
+  bool is_valid = 1;
+
+  // ACCESS TOKEN을 새로이 발급합니다.
+  // 서버의 관점에서 이 토큰은 이미 존재하는 데이터일 가능성이 매우 높습니다.
+  //
+  // 이 토큰을 기반으로 상세한 사용자 정보를 획득할 수 있습니다.
+  string access_token = 2;
+
+  // 이 ACCESS TOKEN이 말료되는 시점을 알려줍니다.
+  google.protobuf.Timestamp expired_at = 3;
+
+  // 이미 존재하는 데이터이더라도 늘상 업데이트가 필요한 데이터는
+  // 여기에 실어서 넣을 수 있도록 처리한다.
+  //
+  // 기본적으로 M2U MAP은 사용자 정보를 캐쉬하도록 처리하고 있다.
+  // 불가피하게 사용자 정보를 캐쉬할수 없는 조건일 경우에
+  // 아래의 GetUserInfo 요청을 통해서 모든 정보를 모든 정보를 갱신하지
+  // 않고 새로운 정보를 갱신하도록 한다.
+  // 만일 Auth Server 지금 발급한 access token이 전혀 새로운 것이라면
+  // 어차피 MAP은 아래의 GetUserInfo를 통해서 새로운 정보를 가져와야
+  // 하므로 요기에 어떤 정보도 채워 보내지 않아도 된다.
+  google.protobuf.Struct volitile_user_meta = 4;
+}
+
+
+/**
+ * 사용자 정보를 요청하는 요청
+ */
+message GetUserInfoRequest {
+  string access_token = 1;
+}
+
+/**
+ * 사용자 정보를 반환합니다.
+ */
+message GetUserInfoResponse {
+  // 사용자 정보, 권한 획득 후 사용자 정보
+  maum.m2u.common.User user = 1;
+}

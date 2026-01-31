@@ -1,0 +1,59 @@
+/**
+ * maum.ai 공통 포맷
+ *
+ * 오디오 인코딩을 위한 타입 정의
+ * 주로 STT, TTS 등에서 재사용 된다.
+ */
+syntax = "proto3";
+
+package maum.common;
+
+option cc_enable_arenas = true;
+
+
+/**
+ * 오디오 인코딩 형식
+ */
+enum AudioEncoding {
+  // Not specified. Will return result [google.rpc.Code.INVALID_ARGUMENT][google.rpc.Code.INVALID_ARGUMENT].
+  ENCODING_UNSPECIFIED = 0;
+  // Uncompressed 16-bit signed little-endian samples (Linear PCM).
+  LINEAR16 = 1;
+
+  // [`FLAC`](https://xiph.org/flac/documentation.html) (Free Lossless Audio
+  // Codec) is the recommended encoding because it is
+  // lossless--therefore recognition is not compromised--and
+  // requires only about half the bandwidth of `LINEAR16`. `FLAC` stream
+  // encoding supports 16-bit and 24-bit samples, however, not all fields in
+  // `STREAMINFO` are supported.
+  FLAC = 2;
+
+  // 8-bit samples that compand 14-bit audio samples using G.711 PCMU/mu-law.
+  MULAW = 3;
+
+  // Adaptive Multi-Rate Narrowband codec. `sample_rate_hertz` must be 8000.
+  AMR = 4;
+
+  // Adaptive Multi-Rate Wideband codec. `sample_rate_hertz` must be 16000.
+  AMR_WB = 5;
+
+  // Opus encoded audio frames in Ogg container
+  // ([OggOpus](https://wiki.xiph.org/OggOpus)).
+  // `sample_rate_hertz` must be 16000.
+  OGG_OPUS = 6;
+
+  // Although the use of lossy encodings is not recommended, if a very low
+  // bitrate encoding is required, `OGG_OPUS` is highly preferred over
+  // Speex encoding. The [Speex](https://speex.org/)  encoding supported by
+  // Cloud Speech API has a header byte in each block, as in MIME type
+  // `audio/x-speex-with-header-byte`.
+  // It is a variant of the RTP Speex encoding defined in
+  // [RFC 5574](https://tools.ietf.org/html/rfc5574).
+  // The stream is a sequence of blocks, one block per RTP packet. Each block
+  // starts with a byte containing the length of the block, in bytes, followed
+  // by one or more frames of Speex data, padded to an integral number of
+  // bytes (octets) as specified in RFC 5574. In other words, each RTP header
+  // is replaced with a single byte containing the block length. Only Speex
+  // wideband is supported. `sample_rate_hertz` must be 16000.
+  SPEEX_WITH_HEADER_BYTE = 7;
+}

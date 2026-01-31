@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="35dp">
+    <com.korail.talk.view.CTextView
+        android:textSize="16dp"
+        android:textColor="@color/brownish_grey"
+        android:id="@+id/mainTitleTxt"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:maxLines="1"
+        android:layout_weight="1"
+        android:autoSizeTextType="uniform"
+        android:autoSizeStepGranularity="1sp"
+        android:autoSizeMinTextSize="12sp"
+        android:autoSizeMaxTextSize="16sp"/>
+    <com.korail.talk.view.CTextView
+        android:textSize="15dp"
+        android:textColor="@color/ocean_blue"
+        android:gravity="right"
+        android:id="@+id/subTitleTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="2.5dp"/>
+    <ImageView
+        android:layout_gravity="center_vertical"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="0x7f080126"/>
+</LinearLayout>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.korail.talk.view.CRadioButton xmlns:android="http://schemas.android.com/apk/res/android"
+    android:textSize="14dp"
+    android:id="@+id/radioTextButton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    style="@style/BlueToggleRadioButton"/>

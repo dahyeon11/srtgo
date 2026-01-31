@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:background="@color/route_stations"
+    android:layout_width="match_parent"
+    android:layout_height="46dp">
+    <com.korail.talk.view.CTextView
+        android:textSize="18dp"
+        android:textColor="@color/route_station_text"
+        android:id="@+id/departureTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="departure"
+        android:layout_toLeftOf="@+id/iv_way"
+        android:layout_centerVertical="true"/>
+    <ImageView
+        android:id="@+id/iv_way"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="2dp"
+        android:layout_marginRight="2dp"
+        android:src="0x7f08013e"
+        android:layout_centerInParent="true"
+        android:layout_centerVertical="true"/>
+    <com.korail.talk.view.CTextView
+        android:textSize="18dp"
+        android:textColor="@color/route_station_text"
+        android:id="@+id/arrivalTxt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="arrival"
+        android:layout_toRightOf="@+id/iv_way"
+        android:layout_centerVertical="true"/>
+</RelativeLayout>

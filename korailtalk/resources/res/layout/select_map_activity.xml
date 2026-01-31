@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:background="#ececec"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <include layout="@layout/appbar"/>
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="51dp">
+        <com.korail.talk.view.CTabLayout
+            android:id="@+id/tl_ktx_map"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:overScrollMode="never"
+            app:tabMode="scrollable"
+            style="@style/CTabLayout"/>
+        <ImageView
+            android:id="@+id/tl_left_arrow"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="0x7f08009b"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"/>
+        <ImageView
+            android:id="@+id/tl_right_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="0x7f08009c"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"/>
+    </RelativeLayout>
+    <com.korail.talk.view.CustomViewPager
+        android:id="@+id/cp_ktx_map"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:overScrollMode="never"/>
+    <com.korail.talk.view.CButton
+        android:textSize="20dp"
+        android:textColor="@color/selector_btn_text_blue"
+        android:gravity="center"
+        android:id="@+id/confirm_button"
+        android:background="@drawable/selector_btn_blue"
+        android:layout_width="match_parent"
+        android:layout_height="55dp"
+        android:text="@string/common_confirm"/>
+</LinearLayout>

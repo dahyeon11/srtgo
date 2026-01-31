@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+    <ImageView
+        android:id="@+id/btn_seat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/icon_seat_selector"
+        android:adjustViewBounds="true"
+        android:layout_centerInParent="true"/>
+    <com.korail.talk.view.CTextView
+        android:textSize="16dp"
+        android:textColor="#000000"
+        android:id="@+id/tv_seat_number"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="1"
+        android:layout_centerInParent="true"/>
+</RelativeLayout>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:id="@+id/v_list_item_unregister_account_bank"
+    android:background="@drawable/selector_btn_stroke_gray_no_press"
+    android:layout_width="match_parent"
+    android:layout_height="54dp">
+    <ImageView
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/iv_list_item_unregister_account_bank"
+        android:layout_width="150dp"
+        android:layout_height="30dp"
+        android:scaleType="fitXY"/>
+</LinearLayout>

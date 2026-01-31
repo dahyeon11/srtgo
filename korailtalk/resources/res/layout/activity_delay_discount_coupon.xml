@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/drawer_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <include layout="@layout/appbar"/>
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+            <ListView
+                android:id="@+id/list"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:listSelector="@android:color/transparent"
+                android:footerDividersEnabled="false"
+                android:overScrollMode="never"
+                style="@style/ListViewMargin"/>
+            <com.korail.talk.view.CTextView
+                android:textSize="15dp"
+                android:textColor="#ff073b62"
+                android:layout_gravity="center"
+                android:id="@+id/tv_delay_discount_coupon_empty"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/delay_discount_no_list"
+                android:drawableTop="0x7f0801d8"
+                android:drawablePadding="19dp"/>
+        </FrameLayout>
+        <include
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            layout="@layout/include_bottom_navigation"/>
+    </LinearLayout>
+    <FrameLayout
+        android:layout_gravity="right"
+        android:orientation="vertical"
+        android:id="@+id/naviMenuContainer"
+        android:background="#fffafafa"
+        android:layout_width="310dp"
+        android:layout_height="match_parent"/>
+</androidx.drawerlayout.widget.DrawerLayout>

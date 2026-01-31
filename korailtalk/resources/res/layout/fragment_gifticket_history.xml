@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_gifticket_history_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="14dp"
+            android:overScrollMode="never"/>
+        <com.korail.talk.view.CTextView
+            android:textSize="15dp"
+            android:textColor="#10304f"
+            android:layout_gravity="center"
+            android:id="@+id/tv_gifticket_empty"
+            android:visibility="invisible"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/gifticket_no_item"
+            android:drawableTop="0x7f080191"
+            android:drawablePadding="25dp"/>
+    </FrameLayout>
+</LinearLayout>

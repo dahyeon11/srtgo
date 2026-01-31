@@ -1,0 +1,80 @@
+/**
+ * maum.ai M2U 플랫폼의 공통 디바이스 데이터 정의
+ *
+ * namespace: maum.m2u.common
+ */
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+package maum.m2u.common;
+
+
+/**
+ * 디바이스 정보 정의
+ * 디바이스에는 타입, 모델, 시리얼, 버전의 기본 정보를 갖습니다.
+ *
+ * 디바이스는 가변적인 정보를 가질 수 있습니다.
+ * 이 가변적인 장보는 디바이스 별로 상이할 수 있어서 자세한 변경은
+ * 추가직인 메시지로 변경할 수 있을 수 있습니다.
+ */
+message Device {
+  // 장치를 유일하게 식별하는 공유번호,
+  // 장치에서 전송할 경우에는 반드시 서로 다른 일련번호를 가져야 합니다.
+  // 모든 장치는 하나의 서비스에서 절대적으로 유일한 일련번호를 가지고 있어야 한다
+  // 이 정보는 장치별 세션을 생성하는데 사용된다.
+  //
+  // 웹의 경우, 최초 접근하면 강제로 생성해주는 COOKIE 같은 개념
+  // 서로 다른 PC와 브라우저마다 따로 존재해야 햔다.
+  string id = 1;
+
+  // 장치의 타입은 문자열로 정의되면, 서비스에 따라서 매우 상이하게 정의할 수 있습니다.
+  // 예시) 엡, 안드로이드, IOS, 봇, 스피커, PC. 카카오, 페이스북
+  // 접근하는 클라이언트의 API 접속 방법을 분리하는 것이다.
+  // 모델 개념을 합친다.
+  string type = 2;
+
+  // *optional* 장치의 버전 정보, 장치의 SW나 MODEL과는 다른 개념입니다.
+  string version = 3;
+
+  // 서비스 접근 경로
+  // *optional* 사이트별로 추가적인 정보가 필요할 수도 있다.
+  // 내부적인 업무 구분 용도로 사용될 수 있다.
+  string channel = 4;
+
+  // 장치의 처리 능력
+  //
+  // input 능력
+  //   mic, camera_image, camera_movie, keyboard, pointing
+  // output 능력
+  //   display_text, display_image, speaker, action, move, speaker
+  message Capability {
+    // OUTPUT: 텍스트를 출력할 수 있다.
+    bool support_render_text = 1;
+    // OUTPUT: 카드를 처리할 수 있다.
+    bool support_render_card = 2;
+    // OUTPUT: 음성합성을 처리할 수 있다.
+    bool support_speech_synthesizer = 3;
+    // OUTPUT: 오디오를 출력할 수 있다.
+    bool support_play_audio = 4;
+    // OUTPUT: 비디오를 출력할 수 있다.
+    bool support_play_video = 5;
+    // OUTPUT: 행위를 처리할 수 있다.
+    bool support_action = 6;
+    // OUTPUT: 소스를 움직일 수 있다.
+    bool support_move = 7;
+    // INPUT: 음성입력 대기를 처리할 수 있다.
+    bool support_expect_speech = 11;
+  }
+
+  // 장치가 지원하는 입출력 능력을 표시한다.
+  Capability support = 11;
+
+  // *optional* 장치의 현재 시간 정보
+  google.protobuf.Timestamp timestamp = 98;
+  // *optional* 장치의 timezone 정보
+  string timezone = 99;
+  // *optional* 장치의 메타 데이터 정보
+  google.protobuf.Struct meta = 100;
+}

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="70dp">
+        <LinearLayout
+            android:gravity="center_vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="15dp">
+            <com.korail.talk.view.CTextView
+                android:textSize="@dimen/extra_product_group_title_textSize"
+                android:textColor="#000000"
+                android:ellipsize="end"
+                android:id="@+id/tv_group_extra_product_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="서울역 (0)"
+                android:maxLines="1"/>
+            <View
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"/>
+            <com.korail.talk.view.CTextView
+                android:textSize="@dimen/extra_product_group_info_textSize"
+                android:textColor="@color/cornflower_blue"
+                android:ellipsize="end"
+                android:id="@+id/tv_group_time_info"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="2017년 05월 01일 (월) 07:00"
+                android:maxLines="1"/>
+        </LinearLayout>
+        <ImageView
+            android:id="@+id/iv_group_discount_menu_arrow"
+            android:background="0x7f080297"
+            android:visibility="gone"
+            android:layout_width="15dp"
+            android:layout_height="5dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"/>
+    </RelativeLayout>
+    <View
+        android:background="#e1e1e1"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"/>
+</LinearLayout>

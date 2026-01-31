@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="#fff8f8f8"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/headerView"
+        android:background="@drawable/selector_option_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <include layout="@layout/booking_option_header_value_1_hint_1"/>
+    </LinearLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/expandView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="20dp">
+        <com.korail.talk.view.ToggleButtonGroupTableLayout
+            android:id="@+id/radioContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <View
+        android:id="@+id/optionDivider"
+        android:background="@color/listDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"/>
+</LinearLayout>

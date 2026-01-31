@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:background="#e3e3e3"
+    android:paddingLeft="14dp"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingVertical="4dp">
+    <com.korail.talk.view.CCheckBox
+        android:id="@+id/cb_product"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
+        style="@style/BlueCheckBox"/>
+    <com.korail.talk.view.CTextView
+        android:textSize="15dp"
+        android:textColor="#e6666666"
+        android:layout_gravity="center_vertical"
+        android:id="@+id/tv_title"
+        android:focusable="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+</LinearLayout>

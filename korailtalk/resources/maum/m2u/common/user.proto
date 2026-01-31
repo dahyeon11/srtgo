@@ -1,0 +1,30 @@
+/**
+ * maum.ai M2U 플랫폼의 공통 사용자 데이터 정의
+ *
+ * namespace: maum.m2u.common
+ */
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+package maum.m2u.common;
+
+/**
+ * 공통 사용자
+ */
+message User {
+  // 사용자의 UNIQUE ID
+  string user_id = 1;
+
+  // 사용자 이름
+  // *optional*
+  string name = 2; // Opt
+
+  // *optional*, 추가적인 인증 요구에 필요할 수도 있음.
+  string access_token = 3;
+
+  // *optional* 사용자의 부가 정보
+  // musicProvider
+  // shoppingProvider
+  google.protobuf.Struct meta = 11;
+}

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="#ffffff"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <RelativeLayout
+        android:paddingLeft="13dp"
+        android:paddingRight="13dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp">
+        <com.korail.talk.view.CTextView
+            android:textSize="14dp"
+            android:textColor="@color/ocean_blue"
+            android:gravity="center"
+            android:id="@+id/tv_section"
+            android:background="0x7f080170"
+            android:visibility="gone"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="%d구간"
+            android:layout_centerHorizontal="true"/>
+        <com.korail.talk.view.CTextView
+            android:textSize="12dp"
+            android:textColor="#ff159aff"
+            android:id="@+id/tv_dtour"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="XX 정차"
+            android:layout_weight="1"
+            android:layout_alignParentRight="true"/>
+    </RelativeLayout>
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="13dp"
+        android:layout_marginBottom="23dp">
+        <com.korail.talk.view.CTextView
+            android:textSize="20dp"
+            android:textColor="#555555"
+            android:gravity="center_horizontal"
+            android:id="@+id/departureTxt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="여수 EXPO"
+            android:layout_weight="1"
+            android:lineSpacingExtra="13dp"/>
+        <ImageView
+            android:id="@+id/dirArwImg0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-2dp"
+            android:src="0x7f080059"/>
+        <com.korail.talk.view.CTextView
+            android:textSize="20dp"
+            android:textColor="#555555"
+            android:gravity="center_horizontal"
+            android:id="@+id/arrivalTxt"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="여수 EXPO"
+            android:layout_weight="1"
+            android:lineSpacingExtra="13dp"/>
+    </LinearLayout>
+</LinearLayout>

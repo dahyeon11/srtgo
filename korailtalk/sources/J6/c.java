@@ -1,0 +1,14 @@
+package J6;
+
+import java.io.UnsupportedEncodingException;
+
+/* loaded from: classes.dex */
+public abstract class c {
+    public static String basic(String str, String str2) {
+        try {
+            return "Basic " + P7.f.of((str + ":" + str2).getBytes("ISO-8859-1")).base64();
+        } catch (UnsupportedEncodingException unused) {
+            throw new AssertionError();
+        }
+    }
+}

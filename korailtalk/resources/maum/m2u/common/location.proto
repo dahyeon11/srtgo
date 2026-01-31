@@ -1,0 +1,30 @@
+/**
+ * maum.ai M2U 플랫폼의 공통 위치 정보 데이터 정의
+ *
+ * namespace: maum.m2u.common
+ */
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package maum.m2u.common;
+
+/**
+ * 위치 정보
+ * 위치 정보는 GPS 등의 위치 정보를 처리할 수 있는 단말이 서버로 넘기 수 있는 데이터이고,
+ * map의 context 정보에 실어서 보낼 수 있다.
+ *
+ * 단말은 새로운 위치 정보가 채집되면 이를 Map에 실어서 보낼 수 있다.
+ *
+ * DA에게는 Location 정보로 전달된다.
+ */
+message Location {
+  // 위도
+  float latitude = 1;
+  // 경도
+  float longitude = 2;
+  // 기타 문자열로 표현된 장소 정보, "경복궁", "경포대"
+  string location = 3;
+  // 현재 위치가 채집된 시간, 위치는 시간에 따라서 바뀔 수 있다.
+  google.protobuf.Timestamp refresh_at = 4;
+}

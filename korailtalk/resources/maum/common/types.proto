@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package maum.common;
+
+option cc_enable_arenas = true;
+
+
+//
+// grpc 를 통한 파일 전송 체계
+// meta 데이터로 다음을 전송해야 한다.
+// 기본정보
+// in.filename = BASE64 encoded filename
+//       파일 이름에 한글이 포함되어 있을 수 있으므로
+// 추가적으로 다음 메타들이 전송될 수 있다.
+// in.lang, in.model, in.samplerate and so on.
+
+//
+// For File Transter
+message FilePart {
+  bytes part = 1;
+}

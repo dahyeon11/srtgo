@@ -1,0 +1,9 @@
+package com.google.android.gms.internal.ads;
+
+import android.os.IInterface;
+
+/* renamed from: com.google.android.gms.internal.ads.Ph, reason: case insensitive filesystem */
+/* loaded from: classes2.dex */
+public interface InterfaceC1756Ph extends IInterface {
+    void zze(InterfaceC1633Mh interfaceC1633Mh);
+}

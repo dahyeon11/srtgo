@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:focusable="true"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:id="@+id/ticketImg"
+        android:background="@drawable/bg_ticket_blue"
+        android:paddingLeft="13dp"
+        android:paddingTop="4dp"
+        android:paddingRight="13dp"
+        android:paddingBottom="4dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.korail.talk.view.CTextView
+            android:textSize="16dp"
+            android:textColor="#ffffff"
+            android:id="@+id/tv_ticket_title_left"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="0000년 00월 00일 (일)"
+            android:layout_weight="1"/>
+        <com.korail.talk.view.CTextView
+            android:textSize="15dp"
+            android:textColor="#ffffff"
+            android:id="@+id/tv_ticket_title_right"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+</LinearLayout>

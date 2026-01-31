@@ -1,0 +1,159 @@
+/**
+ * maum.ai BRAIN STT 에서 사용하는 공통 데이터 포맷
+ * SPEECH 관련 타입을 정의합니다.
+ * STT 데이터 타입
+ * TTS 데이터 타입
+ *
+ * namespace: maum.brain.stt
+ */
+syntax = "proto3";
+import "google/protobuf/duration.proto";
+import "maum/common/lang.proto";
+import "maum/common/audioencoding.proto";
+
+option cc_enable_arenas = true;
+package maum.brain.stt;
+
+/**
+ * 음성인식을 위한 파라미터
+ *
+ * AudioEncoding, sample_rate 등의 옵션을 가지고 있다.
+ */
+message SpeechRecognitionParam {
+  // STT encoding
+  // 현재는 PCM만 지원한다.
+  maum.common.AudioEncoding encoding = 1;
+  // STT sample rate
+  // 8K, 16K를 지원한다. 기본값으로 16K를 사용한다.
+  int32 sample_rate = 2;
+  // STT Lang
+  // 현재 언어는 kor, eng 만 사용가능하다.
+  maum.common.Lang lang = 3;
+  // STT 모델
+  // *Optional* STT 학습 모델 정보는 지정된 내용으로 전송될 수 있다.
+  // 이값은
+  string model = 4;
+  // if true, detect endpoint
+  // *Optional* If `false` or omitted, the recognizer will perform continuous
+  // recognition (continuing to wait for and process audio even if the user
+  // pauses speaking) until the client closes the input stream (gRPC API) or
+  // until the maximum time limit has been reached. May return multiple
+  // `StreamingRecognitionResult`s with the `is_final` flag set to `true`.
+  //
+  // If `true`, the recognizer will detect a single spoken utterance. When it
+  // detects that the user has paused or stopped speaking, it will return an
+  // `END_OF_SINGLE_UTTERANCE` event and cease recognition. It will return no
+  // more than one `StreamingRecognitionResult` with the `is_final` flag set to
+  // `true`.
+  bool single_utterance = 5;
+  int32 interim_results = 6; // NOT USED
+  int32 max_alternatives = 11; // NOT USED
+
+  bool profanity_filter = 21; // NOT USED
+  bool enable_word_time_offsets = 22; // NOT USED
+}
+
+// The top-level message sent by the client for the `StreamingRecognize` method.
+// Multiple `StreamingRecognizeRequest` messages are sent. The first message
+// must contain a `streaming_config` message and must not contain `audio` data.
+// All subsequent messages must contain `audio` data and must not contain a
+// `streaming_config` message.
+message StreamingRecognizeRequest {
+  // The streaming request, which is either a streaming config or audio content.
+  oneof streaming_request {
+    // Provides information to the recognizer that specifies how to process the
+    // request. The first `StreamingRecognizeRequest` message must contain a
+    // `streaming_config`  message.
+    SpeechRecognitionParam speech_param = 1;
+
+    // The audio data to be recognized. Sequential chunks of audio data are sent
+    // in sequential `StreamingRecognizeRequest` messages. The first
+    // `StreamingRecognizeRequest` message must not contain `audio_content` data
+    // and all subsequent `StreamingRecognizeRequest` messages must contain
+    // `audio_content` data. The audio bytes must be encoded as specified in
+    // `RecognitionConfig`. Note: as with all bytes fields, protobuffers use a
+    // pure binary representation (not base64). See
+    // [audio limits](https://cloud.google.com/speech/limits#content).
+    bytes audio_content = 2;
+  }
+}
+
+// `StreamingRecognizeResponse` is the only message returned to the client by
+// `StreamingRecognize`. A series of zero or more `StreamingRecognizeResponse`
+// messages are streamed back to the client. If there is no recognizable
+// audio, and `single_utterance` is set to false, then no messages are streamed
+// back to the client.
+// - Only two of the above responses #4 and #7 contain final results; they are
+//   indicated by `is_final: true`. Concatenating these together generates the
+//   full transcript: "to be or not to be that is the question".
+//
+// - The others contain interim `results`. #3 and #6 contain two interim
+//   `results`: the first portion has a high stability and is less likely to
+//   change; the second portion has a low stability and is very likely to
+//   change. A UI designer might choose to show only high stability `results`.
+//
+// - The specific `stability` and `confidence` values shown above are only for
+//   illustrative purposes. Actual values may vary.
+//
+// - In each response, only one of these fields will be set:
+//     `error`,
+//     `speech_event_type`, or
+//     one or more (repeated) `results`.
+message StreamingRecognizeResponse {
+  // Indicates the type of speech event.
+  enum SpeechEventType {
+    // No speech event specified.
+    SPEECH_EVENT_UNSPECIFIED = 0;
+
+    // This event indicates that the server has detected the end of the user's
+    // speech utterance and expects no additional speech. Therefore, the server
+    // will not process additional audio (although it may subsequently return
+    // additional results). The client should stop sending additional audio
+    // data, half-close the gRPC connection, and wait for any additional results
+    // until the server closes the gRPC connection. This event is only sent if
+    // `single_utterance` was set to `true`, and is not used otherwise.
+    END_OF_SINGLE_UTTERANCE = 1;
+  }
+
+  // *Output-only* If set, returns a [google.rpc.Status][google.rpc.Status] message that
+  // specifies the error for the operation.
+  // google.rpc.Status error = 1;
+  // maum.ai에서는 NOT_OK인 경우에 detail_error_messages에서 해당 내용을 꺼내서 사용할 수 있도록 한다.
+
+  // *Output-only* This repeated list contains zero or more results that
+  // correspond to consecutive portions of the audio currently being processed.
+  // It contains zero or more `is_final=false` results followed by zero or one
+  // `is_final=true` result (the newly settled portion).
+  repeated SpeechRecognitionResult results = 1;
+
+  // *Output-only* Indicates the type of speech event.
+  SpeechEventType speech_event_type = 4;
+}
+
+//
+// STT Result를 위한 타입
+//
+
+/**
+ * 단어 정보
+ */
+message WordInfo {
+  // 단어 시작 시간
+  google.protobuf.Duration start_time = 1;
+  // 단어 끝나는 시간
+  google.protobuf.Duration end_time = 2;
+  // 단어
+  string word = 3;
+}
+
+/**
+ * 음성인식 결과
+ */
+message SpeechRecognitionResult {
+  // 인식된 전체
+  string transcript = 1;
+  // 최종 여부
+  bool final = 2;
+  // 단어 단위로 시간 표시
+  repeated WordInfo words = 3;
+}

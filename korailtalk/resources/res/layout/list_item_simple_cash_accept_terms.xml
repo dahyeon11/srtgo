@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.korail.talk.view.CCheckBox
+        android:textSize="16dp"
+        android:id="@+id/cb_list_item_simple_cash_accept_terms"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginRight="4dp"
+        android:layout_marginBottom="14dp"
+        android:drawablePadding="10dp"
+        android:layout_weight="1"
+        android:lineSpacingExtra="2dp"
+        android:layout_marginHorizontal="4dp"
+        android:layout_marginVertical="14dp"
+        style="@style/BlueCheckBoxWithText"/>
+    <com.korail.talk.view.CButton
+        android:textSize="14dp"
+        android:gravity="center"
+        android:layout_gravity="center_vertical"
+        android:id="@+id/btn_list_item_simple_cash_accept_terms"
+        android:layout_width="62.5dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:text="@string/common_accept_terms_detail"
+        android:layout_marginHorizontal="16dp"
+        style="@style/ButtonSmallBlue"/>
+</LinearLayout>

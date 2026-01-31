@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.korail.talk.view.CTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:textSize="17dp"
+    android:textColor="@color/snackbar_text"
+    android:id="@+id/tv_dialog_content"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:lineSpacingExtra="5dp"/>

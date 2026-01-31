@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+import "maum/common/v2/lang_v2.proto";
+import "maum/common/emotion.proto";
+//import "maum/common/types.proto";
+
+option java_multiple_files = true;
+option java_package = "maum.brain.tts.v2";
+option java_outer_classname = "BrainNgTtsService";
+//option objc_class_prefix = "HLW";
+
+
+package maum.brain.tts.v2;
+
+enum AudioEncoding{
+    WAV = 0;
+    PCM = 1;
+}
+
+message PreprocessingRequest {
+    //Language type
+    maum.common.v2.Lang lang = 1;
+    string text = 2;
+    string profile = 3;
+}
+
+message Padding {
+    float begin = 1; 
+    float end = 2;
+}
+
+message TtsRequest {
+    //Language type
+    maum.common.v2.Lang lang = 1;
+    int32 sampleRate = 2;
+    string text = 3;
+    int32 speaker = 4;
+    string profile = 5;
+    AudioEncoding audioEncoding = 6;
+    string speakerName = 7;
+    maum.common.Emotion emotion = 8;
+    float durationRate = 9;
+    Padding padding = 10; 
+}
+
+message Sentence {
+    string text = 1;
+    int32 silenceSample = 2;
+}
+
+message TtsCustomRequest {
+    //Language type
+    maum.common.v2.Lang lang = 1;
+    int32 sampleRate = 2;
+    repeated Sentence sentences = 3;
+    int32 speaker = 4;
+    string profile = 5;
+    AudioEncoding audioEncoding = 6;
+    string speakerName = 7;
+    maum.common.Emotion emotion = 8;
+    float durationRate = 9;
+    Padding padding = 10; 
+}
+
+message TtsMediaResponse {
+    bytes mediaData = 1;
+}
+
+message PreprocessingResponse {
+    string text = 1;
+}
+
+service NgTtsService {
+    rpc Preprocess (PreprocessingRequest) returns (PreprocessingResponse);
+    rpc SpeakWav(TtsRequest) returns (stream TtsMediaResponse);
+    rpc SpeakWavCustom(TtsCustomRequest) returns (stream TtsMediaResponse);
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="calendar_init_value">YYYY년 MM월 DD일</string>
+    <string name="payment_possible_use_point">사용가능 포인트</string>
+    <string name="payment_select_coupon">할인 쿠폰을 선택해주세요.</string>
+    <string name="payment_select_delay">지연 할인증을 선택해주세요.</string>
+    <string name="payment_select_employee">공무출장증을 입력해 주세요.</string>
+    <string name="payment_select_passenger">적용할 승객을 선택해 주세요.</string>
+    <string name="payment_use_point">사용하실 포인트</string>
+    <string name="payment_use_possible_mileage">사용 가능한 마일리지</string>
+</resources>

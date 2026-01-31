@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:paddingBottom="50dp"
+    android:focusable="true"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.korail.talk.view.CButton
+        android:textSize="14dp"
+        android:id="@+id/nextDayQueryBtn"
+        android:layout_width="match_parent"
+        android:layout_height="35dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="15dp"
+        android:text="다음날(00월 00일) 조회하기"
+        style="@style/ButtonRoundStrokeGray"/>
+</RelativeLayout>

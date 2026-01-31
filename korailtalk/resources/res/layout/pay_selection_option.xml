@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <include
+        android:id="@+id/headerView"
+        layout="@layout/payment_option_header"/>
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/expandView"
+        android:background="@drawable/list_unfold_01"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:visibility="gone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="14dp">
+        <com.korail.talk.view.payment.creditCard.CreditCardView
+            android:id="@+id/creditCardView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </LinearLayout>
+    <View
+        android:id="@+id/optionDivider"
+        android:background="@color/listDivider"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginLeft="15dp"
+        android:layout_marginRight="15dp"
+        android:layout_marginHorizontal="15dp"/>
+</LinearLayout>

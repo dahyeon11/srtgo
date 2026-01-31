@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:background="#ffffff"
+    android:paddingLeft="10dp"
+    android:paddingTop="22dp"
+    android:paddingRight="10dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="horizontal"
+        android:id="@+id/returnNumberView"
+        android:paddingLeft="13dp"
+        android:paddingRight="13dp"
+        android:paddingBottom="22dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <com.korail.talk.view.CTextView
+            android:textSize="13dp"
+            android:textColor="#6c6c6c"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/receipt_ticket_number"
+            android:layout_weight="1"/>
+        <com.korail.talk.view.CTextView
+            android:textSize="13dp"
+            android:textColor="#929292"
+            android:id="@+id/tv_return_no"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0000년 00월 00일 (일) 00:00:00"/>
+    </LinearLayout>
+</LinearLayout>

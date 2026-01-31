@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.korail.talk.view.CTextView
+        android:textSize="14dp"
+        android:textColor="@color/brownish_grey"
+        android:id="@+id/tv_crew_information"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:text="@string/companion_mileage_detail_footer"
+        android:lineSpacingExtra="6dp"/>
+</LinearLayout>

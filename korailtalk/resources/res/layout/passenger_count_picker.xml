@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <ImageButton
+        android:id="@+id/minusBtn"
+        android:background="@null"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/selector_btn_minus"
+        android:contentDescription="@string/booking_desc"/>
+    <com.korail.talk.view.CTextView
+        android:textSize="20dp"
+        android:textColor="@color/selector_passenger_count_picker_text"
+        android:gravity="center"
+        android:layout_gravity="center_vertical"
+        android:id="@+id/valueTxt"
+        android:layout_width="30dp"
+        android:layout_height="wrap_content"
+        android:text="0"/>
+    <ImageButton
+        android:id="@+id/plusBtn"
+        android:background="@null"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/selector_btn_plus"
+        android:contentDescription="@string/booking_inc"/>
+</LinearLayout>

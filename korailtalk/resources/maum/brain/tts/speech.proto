@@ -1,0 +1,59 @@
+/**
+ * maum.ai BRAIN TTS 에서 사용하는 공통 데이터 포맷
+ * SPEECH 관련 타입을 정의합니다.
+ * TTS 데이터 타입
+ *
+ * namespace: maum.brain.tts
+ */
+syntax = "proto3";
+import "maum/common/lang.proto";
+import "maum/common/audioencoding.proto";
+
+option cc_enable_arenas = true;
+package maum.brain.tts;
+
+/**
+ * TTS 관련 AsyncInterface를 호출할 때 사용될 수 있는 파라미터.
+ */
+message SpeechSynthesizerParam {
+  // 출력 인코딩 포맷
+  maum.common.AudioEncoding encoding = 1;
+
+  // 출력 언어
+  maum.common.Lang lang = 2;
+  // 출력 PCM
+  // *Optional*, MP3의 경우에는 꼭 필요하지는 않다.
+  // 8K, 16K를 지원한다. 기본값으로 16K를 사용한다.
+  int32 sample_rate = 3;
+}
+
+message SpeakRequest {
+  // 출력 인코딩 포맷
+  maum.common.AudioEncoding encoding = 1;
+
+  // 출력 언어
+  maum.common.Lang lang = 2;
+  // 출력 PCM
+  // *Optional*, MP3의 경우에는 꼭 필요하지는 않다.
+  // 8K, 16K를 지원한다. 기본값으로 16K를 사용한다.
+  int32 sample_rate = 3;
+
+  // 출력할 텍스트
+  string text = 4;
+}
+
+
+message SpeakResponse {
+  oneof test_response {
+    SpeechSynthesizerParam param = 1;
+    bytes audio_content = 2;
+  }
+}
+
+
+//
+// 음성 출력을 내보낸다.
+//
+service SpeechSynthesizerService {
+  rpc Speak (SpeakRequest) returns (stream SpeakResponse);
+}

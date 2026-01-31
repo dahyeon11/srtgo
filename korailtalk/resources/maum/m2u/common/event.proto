@@ -1,0 +1,149 @@
+/**
+ * maum.ai M2U 플랫폼, 대화 진행에 관련된 데이터 타입들 정의
+ *
+ * 대화를 진행하는 데 필요한 모든 데이터 타입은 크게 몇가지 정의할 수 있다.
+ *
+ * <입력 형식>
+ *
+ * Utter : 사용자의 입력 메시지
+ * User : 사용자
+ * Device: 위치 정보
+ * Session: 세션 정보
+ * Location: 위치 정보
+ * Document: NLU 결과물
+ * Event: Directive에 대응하는 이벤트 구조
+ *
+ * <출력 형식>
+ * Speech : 응답 출력 메시지
+ * Card: 화면에 다양한 출력을 원하는 메시지
+ * Directive: 단말의 행동을 제어하는 메시지
+ * Meta: 단말의 동작에 필요한 부가 데이터
+ *
+ * namespace: maum.m2u.common
+ */
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "maum/common/lang.proto";
+
+package maum.m2u.common;
+
+// ----------------------------------------------------------------------
+// 이벤트
+// ----------------------------------------------------------------------
+
+/**
+ * 단말에서 보내와서 DA까지 그대로 전달되어야 하는 이벤트
+ * 다양한 처리 결과 정보를 포함하고 있다
+ *
+ * 위임형이 A 형이 아닌 경우에는 인데, 값이 없을 경우도 있다.
+ */
+message Event {
+  // Event interface
+  string interface = 1;
+  // Event operation
+  string operation = 2;
+  // 단말에서 DA에게 전달되는 param
+  DialogAgentForwarderParam param = 3;
+  // Event payload 정의
+  EventPayload payload = 4;
+}
+
+/**
+ * 위임형 이벤트, DA에서 정보 획득, 대화 진행을 위해서 보낸 명령에 대한 응답
+ */
+message DelegateEvent {
+  string interface = 1;
+  string operation = 2;
+
+  DialogAgentForwarderParam param = 3;
+
+  EventPayload payload = 4;
+}
+
+/**
+ * 권한 부여 성공
+ */
+message LauncherAuthorized {
+  // 성공한 accessToken
+  // 이 정보는 참고성이다.
+  // 헤더에 어떤 값이 들어있는지 정보를 획득하도록 한다.
+  string access_token = 1;
+  // 획득 시간 정보
+  google.protobuf.Timestamp authorized_at = 2;
+
+  // 인증을 위한 추가파라미터
+  google.protobuf.Struct meta = 100;
+}
+
+/**
+ * 권한 부여 실패
+ */
+message LauncherAuthorizeFailed {
+  // 접근 토큰
+  string access_token = 1;
+  // 인증 시간
+  google.protobuf.Timestamp authorized_at = 2;
+}
+
+/**
+ * 슬롯이 채워진 경우에 그 값을 정해준다.
+ */
+message LauncherSlotsFilled {
+  // 채워진 슬롯
+  google.protobuf.Struct filled_slots = 1;
+  // 아직도 채워지지 않는 슬롯
+  repeated string unfilled_slots = 2;
+}
+
+/**
+ * AudioPlayerPlay 관련 payload 정보
+ */
+message AudioPlayerPlay {
+  // 오디오 id
+  string id = 1;
+  // 오디오 play 이벤트 (예:finish, stop, pause, resume)
+  string reason = 2;
+}
+
+
+/**
+ * DA에서 단말로 내려보나는 경우에는 현재의 세션, SKILL, INENT를 모두 담아서 내려보내고
+ * 이를 바로 받아볼 수 있도록 처리한다.
+ */
+message DialogAgentForwarderParam {
+  // 챗봇
+  string chatbot = 1;
+  // 스킬
+  string skill = 2;
+  // 의도
+  string intent = 3;
+  // 언어
+  maum.common.Lang lang = 4;
+  // 세션 ID
+  int64 session_id = 11;
+}
+
+/**
+ * 문서 읽기 유/무를 처리하기 위한 정보
+ */
+message LauncherDocumentRead {
+  // 문서 id
+  string id = 1;
+  // 해당 문서를 읽었으면 true, 읽지 않았으면 false (read는 과거분사형)
+  bool read = 2;
+}
+
+/**
+ * Event 관련 payload
+ */
+message EventPayload {
+  oneof test_event {
+    LauncherAuthorized launcher_authorized = 11;
+    LauncherAuthorizeFailed launcher_authorize_failed = 12;
+    LauncherSlotsFilled launcher_slots_filled = 13;
+    AudioPlayerPlay audio_player_play = 14;
+    LauncherDocumentRead launcher_document_read = 15;
+  }
+}

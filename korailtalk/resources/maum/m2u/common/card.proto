@@ -1,0 +1,216 @@
+/**
+ * maum.ai M2U 플랫폼, 대화 진행에 관련된 카드 데이터 타입들 정의
+ *
+ * 카드는 dialog agent에서 단말로 내리는 데이터 형식입니다.
+ *
+ * map에서는 RenderCard 호출을 통해서 데이터를 단말로 내립니다.
+ *
+ * namespace: maum.m2u.common
+ */
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+// import "google/protobuf/timestamp.proto";
+// import "maum/common/lang.proto";
+
+
+package maum.m2u.common;
+
+// ----------------------------------------------------------------------
+// 카드 형태의 데이터
+// ----------------------------------------------------------------------
+
+// 카드 형태의 데이터를 나타나도록 지시한다.
+// CHART
+//    type: 그래프 종류..
+//    options : 출력형태
+//    data: [] , 내부적으로 대시 배열 2차 3차 , object 로 동작한다
+// SELECT CARD
+//  title, 요약 사진 , selected utter,
+// NEWS LIST
+//  title, 요약, 사진 .. 링크 ...
+
+
+/**
+ * 차트 형태의 데이터
+ * google charts 형식을 지원할 수 있도록 정의한다.
+ */
+message ChartCard {
+  // 차트 타입:
+  //  - "PieChart"
+  //  - "BarChart"
+  //  - "XXXChart"
+  string type = 1;
+
+  // 각 차트별로 출력 가능한 다양한 옵션을 지정한다.
+  google.protobuf.Struct options = 2;
+
+  // 차트 출력을 위한 실제 대이터는 배렬로 제공된다.
+  // 각각의 ListValue는 array로 표현된다.
+  // ListValue 내부에는 다시 ListValue를 가질 수 있고 다차원으료 표현이 가능한다.
+  repeated google.protobuf.ListValue data = 10;
+}
+
+/**
+ * 선택형 카드
+ *
+ * 값을 선택할 수 있는 선택형 카드가 필요하다.
+ */
+message SelectCard {
+  /**
+   * 카드내 ITEM
+   */
+  message Item {
+    // 타이틀
+    string title = 1;
+    // *optional* 요약
+    string summary = 2;
+    // *opt* URL
+    string image_url = 3;
+    // 선택될 경우에 전달된 텍스트
+    // 이때에는 이벤트 메시지로 UtterType에 "TOUCH"를 전달하도록 한다.
+    string selected_utter = 100;
+    // Item이 여러개인 경우 대표 Item을 설정한다
+    // selected 값이 true이면 해당 Item이 대표 Item 이다
+    // Item이 두개이상인 경우 selected = true는 한개여야 한다
+    bool selected = 101;
+    // 예) "red large" 와 같이 특정 카드의 CSS를 직접 지정할 수 있도록 한다.
+    string style = 102;
+  }
+  // 카드 전체의 타이블
+  string title = 1;
+  // 카드의 헤데값
+  string header = 2;
+  // 카드의 아이템 목록들
+  repeated Item items = 3;
+  // 가로 본능?
+  bool horizontal = 11;
+  // 다양한 서브 타입을 넣을 수 있도록 한다.
+  string type = 12;
+}
+
+/**
+ * 링크 형태의 카드
+ */
+message LinkCard {
+  // 제목
+  string title = 1;
+  // 요약
+  string summary = 2;
+  // 이미지 URL
+  string image_url = 3;
+  // 이미지 클릭 후 이동할 URL
+  string image_href= 4;
+  // TYPE
+  // 출력의 다양한 형식을 위해서 추가됨.
+  // 특별히 msg type 과 같은 형식으로 사용되기도 함.
+  string type = 5;
+}
+
+/**
+ * 리스트 형태의 카드들
+ */
+message ListCard {
+  // 링크 형태의 카드를 배열로 처리한다.
+  repeated LinkCard cards = 1;
+  // 가로로 출력할지 여부..
+  bool horizontal = 2;
+}
+
+/**
+ * 사용자 지정 카드
+ */
+message CustomCard {
+  string type = 1;
+  // 사용자 지정 카드는 모든 데이터를 다 가지고 있다.
+  google.protobuf.Struct card_data = 10;
+}
+
+/**
+ * 사용자 지정 카드 목록
+ */
+message CustomListCard {
+  // 사용자 지정 카드의 목록
+  repeated CustomCard cards = 1;
+  // 가로로 출력하도록 한다.
+  bool horizontal = 2;
+}
+
+/**
+ * 표 형태의 데이터
+ */
+message TableCard {
+  // 표 type에는 데이터 형식에 대한 정보를 제공한다
+  string type = 1;
+
+  /**
+   * 테이블 내 ITEM
+   */
+  message TableItem {
+    // 키
+    string key = 1;
+    // 값
+    string value = 2;
+    // value에 대해서 적용되는 값 (예 : 정렬, 폰트, 컬러)
+    string style = 3;
+  }
+  repeated TableItem items = 2 ;
+}
+
+/**
+ * 리스트 형태의 표 형태의 데이터
+ */
+message TableListCard {
+  // 테이블 형태의 카드를 배열로 처리한다.
+  repeated TableCard cards = 1;
+  // 가로로 출력하도록 한다.
+  bool horizontal = 2;
+}
+
+/**
+ * Grid 형태의 데이터
+ */
+message GridCard {
+  // Grid type에는 데이터 형식에 대한 정보를 제공한다
+  // - 시장금리 추이
+  // - 기준금리 추이
+  // - 대출금리 추이
+  // 예를 들어 type이 '시장금리 추이' 라면 해당 표는 금리추세를 표현한 표임을 알 수 있다.
+  string type = 1;
+
+  // 표 출력을 위한 실제 데이터는 배열로 제공된다.
+  // columns는 열이 어떻게 구성되어야 할 지에 대한 구조를 제공한다.
+  google.protobuf.ListValue columns = 10;
+
+  // rows은 행을 의미하며 여러개의 ListValue를 가질수 있다.
+  repeated google.protobuf.ListValue rows = 11;
+}
+
+/**
+ * 메시지 카드
+ */
+message Card {
+  // 카드는 다음 중 하나이다.
+  oneof test_card {
+    // 차트 형태의 카드
+    ChartCard chart = 1;
+    // 선택형태의 카드
+    SelectCard select = 2;
+    // 링크 스타일의 카드
+    LinkCard link = 3;
+    // 커스텀 카드
+    CustomCard custom = 4;
+    // 표 형태의 카드
+    TableCard table = 5;
+    // grid 형태의 카드
+    GridCard grid = 6;
+    // 링크 스타일의 카드 목록
+    ListCard link_list = 11;
+    // 커스텀 가드 목록
+    CustomListCard custom_list = 12;
+    // 표 형태의 카드 목록
+    TableListCard table_list = 13;
+    // 기타 raw 데이터
+    string raw = 21;
+  }
+}

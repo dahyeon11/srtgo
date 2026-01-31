@@ -1,0 +1,541 @@
+/**
+ * maum.ai M2U MAP protocol
+ *
+ * <para>
+ * 이 파일은 maum.ai M2U 플랫폼에서 제공하는 인공지능 기반 대화 서비스를 사용하려는
+ * 외부 디바이스 및 시스템이 연동하는 통신 규약을 비동기 방식으로 정의하고 있습니다.
+ * </para>
+ * 기본적인 개념은 아마존 Alexa Voice Server에서 힌트를 얻었지만, grpc를 활용하면서
+ * 얻을 수 있는 장점을 최대한 활용하여 구조 설계를 하였습니다.
+ *
+ * 모든 통신은 `EventStream`이라는 URL을 통해서 처리되게 됩니다.
+ * 주기적인 `Ping`을 통해서 `EventStream`이 필요한지를 확인할 수 있도록
+ * 처리하고 있습니다.
+ *<para>
+ * 1. 각 이벤트나 디렉티브는 하나 이상의 protobuf 메시지로 구성됩니다.
+ * 스트림 형태로 전달되는 메시지들은 반복적인 스트림을 지속적으로 수신합니다.
+ * </para>
+ *
+ * 2. 각 이벤트나 디렉티브의 중간에는 다른 디렉티브가 끼어들 수 있습니다.
+ * 그러나 동시에 2개 이상의 스트림이 전송되지는 않습니다. 이는 HTTP2에서는
+ * 가능한 규격이지만 grpc에서 사용하는 방식으로는 한계가 있습니다.
+ *
+ * 3. EventStream에 헤더 데이터를 통해서 인증 데이터를 처리할 수 있습니다.
+ *
+ * 4. 모든 이벤트와 디렉티브는 각기 `interface/operation` 구조를 가지고 상대방을
+ * 호출합니다. 각 인터페이스와 오퍼레이션은 각기 필요한 추가적인 데이터를 가질 수 있습니다.
+ * 이는 JSON으로 인코딩 될 수 있는 어떤 데이터도 모두 다 수용할 수 있습니다.
+ *
+ * 5. 이벤트와 디렉티브의 타입 중에는 예외가 기본으로 포함되어 있습니다.
+ * 상대방에 요청했던 호출에 대한 처리 실패를 처리할 수 있는 기준입니다.
+ *
+ * 이 프로토콜을 규격을 수용하는 클라이언트는 grpc 1.6 이상을 사용해서 처리하는 것을
+ * 권장합니다. 양방향 비동기 통신을 하므로 어떤 형태의 메시지가 올리 예상할 수 없으므로
+ * 상태관리에 주의해야 하며 grpc에서 제공하는 풍부한 API를 활용해야 합니다.
+ *
+ * namespace: maum.m2u.map
+ */
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/empty.proto";
+import "maum/brain/stt/speech.proto";
+import "maum/brain/tts/speech.proto";
+import "maum/brain/idr/idr.proto";
+import "maum/m2u/common/device.proto";
+import "maum/m2u/common/location.proto";
+import "maum/m2u/common/event.proto";
+
+package maum.m2u.map;
+// TODO
+// package maum.m2u.facade
+
+// M2U 서비스를 호출하여 사용한다.
+//
+// 주기적으로 PING을 호출해서 해당 디바이스에 전송할 이벤트가 있는지 확인한다.
+// META
+// - m2u-auth-token: base64 encoded authentication token
+// - m2u-auth-provider: authtication provider
+service MaumToYouProxyService {
+  // 주기적으로 PING을 호출해서 해당 디바이스에 전송할 이벤트가 있는지 확인한다.
+  // META
+  //  - m2u-auth-token : base64 encoded authentication token
+  //  - m2u-auth-provider: authtication provider
+  // 전송 규칙
+  //  - Device는 EventStream이 끊긴 이후로 1분 이내에 Ping을 보내야 한다.
+  //  - 서버는 Ping이 오지 않은 디바이스는 Active 하지 않은 것으로 판단하고
+  //  - 관련 DialogAgent들을 모두 정리한다.
+  rpc Ping (PingRequest) returns (PongResponse) {
+  }
+  // 서버에서 전송에정인 이벤트를 수신한다.
+  // 서버에서 전송할 예정인 이벤트는 Ping의 결과 알려주도록 한다.
+  rpc GetDirectives (stream MapEvent) returns (stream MapDirective) {
+  }
+  // 이벤트는 전송하기 위해서 스트림을 생성한다.
+  rpc EventStream (stream MapEvent) returns (stream MapDirective) {
+  }
+  // 해당 AsyncInterface가 제공되는지 조회할 수 있다.
+  // AsyncInterface에 interface 만 지정하면 모든 operation들이 반환된다.
+  // FIXME, 이 서비스에 대한 보안적인 문제에 대한 검토가 필요하다.
+  rpc ListAsyncInterfaces (AsyncInterface) returns (AsyncInterfaceList) {
+  }
+}
+
+//
+// PING
+//
+
+/**
+ * 주기적인 Ping 요청
+ */
+message PingRequest {
+  // 디바이스 정보
+  maum.m2u.common.Device device = 1;
+  // PING 호출 시간
+  google.protobuf.Timestamp ping_at = 101;
+}
+
+/**
+ * PONG 응답
+ */
+message PongResponse {
+  // PONG을 통한 클라이언트 상태 표시
+  enum PongClientState {
+    // 기존에 이미 존재한 클라이언트 지속
+    PONG_CLIENT_CONTINUE = 0;
+    // 새로운 클라이언트가 발견되었고 이를 등록처리
+    PONG_NEW_CLIENT_FOUND = 1;
+    // 기존의 클라이언트가 재시작 되었음을 인지했음.
+    PONG_IDLE_CLIENT_RESTART = 2;
+    // 접근이 거부되었음
+    PONG_ACCESS_DENIED = 3;
+  }
+  // 클라이언트 상태
+  PongClientState client_state = 1;
+  // 서버 식별 정보
+  MaumToYouIdentifier m2u_id = 2;
+  // 새로운 EventStream을 요청할 필요가 있는지 여부
+  bool require_event_stream = 3;
+  DirectiveState dir_state = 11;
+  string version = 99;
+  google.protobuf.Timestamp pong_at = 100;
+}
+
+/**
+ * M2U 서버에 대한 구분
+ */
+message MaumToYouIdentifier {
+  string uuid = 1;
+  string version = 2;
+  string licensed_to = 3;
+}
+
+/**
+ * 디렉티브 상태
+ */
+message DirectiveState {
+  bool pending = 1;
+  int32 pending_count = 2;
+  bool discarded = 11;
+  int32 discarded_count = 12;
+}
+
+//
+// EVENTS
+//
+
+/**
+ * 클라이언트에서 서버로 전송되는 이벤트 구조
+ */
+message MapEvent {
+  // oneof in map event
+  oneof test_event {
+    // 이벤트 하나 또는 새로운 스트림 이벤트의 시작
+    EventStream event = 1;
+    // 프레임 끝
+    StreamEnd stream_end = 2;
+    // 프레임 중지
+    StreamBreak stream_break = 3;
+    // 바이트 배열 형식의 스트림
+    bytes bytes = 11;
+    // 텍스트 형식의 스트림
+    string text = 12;
+    // 객체 형식의 스트림
+    StreamMeta meta = 21;
+    // 디렉티브 호출에 대한 예외
+    MapException exception = 99;
+  }
+}
+
+/**
+ * 이벤트 형식의 FRAME
+ * 단일 이벤트이거나 연속된 스트림 이벤트의 시작일 수 있다.
+ */
+message EventStream {
+  // 호출되는 대상에 대한 정의
+  // 호출되는 대상은 interface와 operation으로 정의된다.
+  // 예를 들어, interface는 VideoPlayer 이고 operation 은 stop 이다.
+  AsyncInterface interface = 1;
+  // 호출 ID
+  // AsyncInterface 메시지의 ID에서 유일하게 생성된다.
+  string stream_id = 2;
+  // 요청 동기화 ID *Optional*
+  // 이벤트가 대응이 되는 응답이 있을 경우에 이를 정의할 수 있다.
+  // 예를 들어서 AudioTalk의 이벤트를 클라이언트에서 전송할 경우에는
+  // 응답으로 음성인식이 완료됨, 응답 메시지의 전송, 응답 화면 출력 등 디렉티브를
+  // 받을 수 있다.
+  string operation_sync_id = 3;
+  // 이벤트 컨텍스트
+  message EventContext {
+    oneof test_context {
+      // 디바이스 정보
+      maum.m2u.common.Device device = 1;
+      // 위치 정보
+      maum.m2u.common.Location location = 2;
+    }
+  }
+  // 컨텍스트는 한 개 이상 전송될 수 있다.
+  repeated EventContext contexts = 11;
+  // Event에는 BODY Stream에 대한 파라미터가 존재할 수 있다.
+  // 각 파라미터는 스트림 BODY 규격에 따라서 다르다. 자세한 사항은
+  // 각 AsyncInterface에 규격표에 정리하여 정의할 수 있다.
+  message EventParam {
+    oneof test_param {
+      // 음성인식 파라미터
+      maum.brain.stt.SpeechRecognitionParam speech_recognition_param = 1;
+      // 이미지 파라미터
+      maum.brain.idr.ImageRecognitionParam image_recognition_param = 2;
+      // 비디오 파라미터
+      VideoParam video_param = 3;
+      // 제스처 파라미터
+      GestureParam gesture_param = 4;
+      // 키보드 파라미터
+      KeyboardParam keyboard_param = 5;
+      // DA로 전달할 현재의 세션, SKILL, INENT, lang 파라미터
+      maum.m2u.common.DialogAgentForwarderParam dialog_agent_forwarder_param = 6;
+      // 빈 파라미터
+      google.protobuf.Empty empty_param = 1000;
+    }
+  }
+  // 이벤트 파라미터는 한개 존재한다.
+  EventParam param = 12;
+  // 이벤트에 대한 메타데이터는 추가적인 메시지로서 각 AsyncInterface 또는 사용자의 정의에
+  // 따라서 임의의 메시지가 전송될 수 있다.
+  google.protobuf.Struct payload = 99;
+  // 이벤트가 시작된 시간
+  google.protobuf.Timestamp begin_at = 100;
+}
+
+//
+// DIRECTIVES
+//
+
+/**
+ * 서버에서 클라이언트로 전송되는 지시자 구조
+ */
+message MapDirective {
+  // onfof in map directive
+  oneof test_directive {
+    // 디렉티브 하나 또는 새로운 디렉티브 스트림의 시작
+    DirectiveStream directive = 1;
+    // 프레임의 끝
+    StreamEnd stream_end = 2;
+    // 프레임의 중지
+    StreamBreak stream_break = 3;
+    // 바이트 배열 형식의 스트림
+    bytes bytes = 11;
+    // 텍스트 형식의 스트림
+    string text = 12;
+    // 객체 형식의 스트림
+    StreamMeta meta = 21;
+    // 이벤트 호출에 대한 예외
+    MapException exception = 99;
+  }
+}
+
+/**
+ * 디렉티브 형식의 프레임
+ * 단일한 디렉티브 이거나 연속된 스트림 디렉티브의 시작일 수 있다.
+ */
+message DirectiveStream {
+  // 호출되는 대상에 대한 정의
+  // 호출되는 대상은 interface와 operation으로 정의된다.
+  // 예를 들어, interface는 VideoPlayer 이고 operation 은 stop 이다.
+  AsyncInterface interface = 1;
+  // 호출 메시지를 구분하는 ID
+  string stream_id = 2;
+  // 대화와 관련된 응답 메시지 규격 *Optional*
+  string operation_sync_id = 3;
+  message DirectiveParam {
+    oneof test_param {
+      // STT 음성인식 파라미터
+      maum.m2u.common.DialogAgentForwarderParam da_forward_param = 1;
+      // TTS 음성인식 파라미터
+      maum.brain.tts.SpeechSynthesizerParam speech_synthesizer_param = 2;
+      // 비디오 파라미터
+      VideoParam video_param = 3;
+      // 빈 파라미터
+      google.protobuf.Empty empty_param = 1000;
+    }
+  }
+  DirectiveParam param = 4;
+  // 디렉티브에 대한 메타데이터는 추가적인 메시지로서 각 AsyncInterface
+  // 또는 사용자의 정의에 따라서 임의의 메시지가 전송될 수 있다.
+  google.protobuf.Struct payload = 99;
+  // 디렉티브가 시작된 시간
+  google.protobuf.Timestamp begin_at = 100;
+}
+
+//
+// EXCEPTION
+//
+
+/**
+ * 예외는 Event나 Directive에 대응하여 호출시 문제가 생기면 이를 내보내도록 한다.
+ */
+message MapException {
+  // 예외를 위한 ID, stream_id와 동일한 레벨임.
+  string exception_id = 1;
+  // 예외 상태 코드 일반화된 상태 코드
+  enum StatusCode {
+    // StatusCode는 client에러, 호출에러, 논리에러로 구분합니다
+    STATUS_NOT_SPECIFIED = 0;
+
+    // 500 : GRPC 에러
+    GRPC_STT_ERROR = 501;
+    GRPC_IDR_ERROR = 502;
+    GRPC_TTS_ERROR = 503;
+    GRPC_AUTH_SIGN_IN_ERROR = 504;
+    GRPC_AUTH_SIGN_OUT_ERROR = 505;
+    GRPC_AUTH_MULTIFACTOR_VERIFY_ERROR = 506;
+    GRPC_AUTH_IS_VALID_ERROR = 507;
+    GRPC_AUTH_GET_USER_INFO_ERROR = 508;
+    GRPC_AUTH_UPDATE_USER_SETTINGS_ERROR = 509;
+    GRPC_AUTH_GET_USER_SETTINGS_ERROR = 510;
+    GRPC_ROUTER_OPEN_ERROR = 511;
+    GRPC_ROUTER_TALK_ERROR = 512;
+    GRPC_ROUTER_EVENT_ERROR = 513;
+    GRPC_ROUTER_CLOSE_ERROR = 514;
+    GRPC_ROUTER_FEEDBACK_ERROR = 515;
+    GRPC_STT_TRANSCRIPT_NULL_ERROR = 516;
+
+    // 300 : Clinet, Auth 에러
+    // Auth 에러
+    // isVaild Exception이 발생한 경우
+    AUTH_IS_VAILD_FAILED = 301;
+    // isValid 결과 false인 경우(토큰만료)
+    AUTH_INVALID_AUTH_TOKEN = 302;
+    // 인증 실패
+    AUTH_FAILED = 303;
+    // 인증시 필요한 헤더정보가 잘못 설정된 경우
+    AUTH_INVALID_HEADER = 304;
+    // 토큰 유효성 체크 오류
+    AUTH_CHECK_AUTH_FAILED = 305;
+    // map 에러
+    // 스트림 형식의 요청에서 파라미터가 없는 경우
+    MAP_NO_STREAM_PARAM = 310;
+    // 요청하는 AsyncInterface가 존재하지 않는 경우
+    MAP_IF_NOT_FOUND = 311;
+    // 인터페이스의 스트림형식과 실제 구현된 대상 인터페이스의 스트림 형식이 맞지 않는 경우
+    MAP_IF_STREAMING_NOT_MATCH = 312;
+    // Streaming 처리 중에 또다른 요청이 들어온 경우
+    MAP_IF_DUPLICATED_STREAMING = 313;
+    // 등록되지 않은 Event case인 경우
+    MAP_EVENT_CASE_NOT_SET = 314;
+    // 현재 진행중인 StreamId가 없는 경우
+    MAP_CURRENTLY_HAS_NO_STREAM = 315;
+    // 현재 진행중인 StreamId와 일치하지 않는 경우
+    MAP_STREAM_ID_NOT_MATCH = 316;
+    // MessageFormat 관련 처리에 에러가 발생한 경우
+    MAP_PAYLOAD_ERROR = 317;
+    // classLoader 에러 발생한 경우
+    MAP_CLASS_NOT_FOUND = 318;
+
+    // 400 : ROUTER 에러
+    ROUTER_SESSION_NOT_FOUND = 401; // 901
+    ROUTER_SESSION_INVALID = 402;   // 902
+    ROUTER_CHATBOT_NOT_FOUND = 403; // 903
+    ROUTER_DA_NOT_FOUND = 404;      // 904
+    ROUTER_DA_ERROR = 405;          // 905
+    ROUTER_ITF_NOT_FOUND = 406;     // 906
+    ROUTER_ITF_ERROR = 407;         // 906
+    // hzc 총 세션수가 기준범위를 초과한 경우 (유량제어)
+    MAP_TOTAL_SESSION_COUNT_EXCEEDED = 408;
+    // 시스템 점검중
+    MAP_SYSTEM_MAINTENANCE = 409;
+  }
+  // 상태 정보
+  StatusCode status_code = 10;
+  // 상세한 서버의 예외 메시지 정보
+  // 화면에 출력하거나 또는 단말에서 로그로 남길 수 있음.
+  string ex_message = 21;
+  // 예외 메시지 코드
+  // MAP 내부에서 유지하고 있는 유니크한 에러 위치를 식별하는 번호
+  int32 ex_index = 22;
+  // 상세한 예외 본문
+  google.protobuf.Struct payload = 99;
+  // 예외 전송 시각
+  google.protobuf.Timestamp thrown_at = 100;
+  // *Optional* 예외가 발생한 ID
+  // 예외가 인증에러와 관련된 것들이 아닌 경우에는
+  string stream_id = 101;
+  // *Optional* 예외와 관련된 operation_sync_id
+  string operation_sync_id = 102;
+  // *Optional* 예외와 관련된 AsyncInterface
+  AsyncInterface called_interface = 103;
+}
+
+//
+// FRAME
+//
+
+/**
+ * `StreamMeta`을 통해서
+ * Event나 Directive에 추가적인 스트림 데이터를 전송할 수 있다.
+ * 기본적인 스트림 데이터 형식인 문자열이나 바이트 배열 이외에 다른 메시지를
+ * 포함하려고 할 때 사용할 수 있다.
+ */
+message StreamMeta {
+  // 객체 타입, 메타 데이터의 객체 유형을 정의 한다.
+  string object_type = 1;
+  // 메타 데이터, 메타 데이터를 정의한다.
+  google.protobuf.Struct meta = 11;
+}
+
+/**
+ * 스트림 형식의 Event나 Directive의 끝을 표시해준다.
+ */
+message StreamEnd {
+  // 종료시키려는 FRAME을 명시적으로 정의한다.
+  string stream_id = 1;
+  // 종료 시간
+  google.protobuf.Timestamp end_at = 2;
+}
+
+/**
+ *
+ */
+message StreamBreak {
+  // 중지 이유 메시지, 빈 문자열일 수 있수 없다. 중지 사유를
+  // 로그로 남겨야 하므로 이를 기록해야 한다.
+  // 로그를 남길 수 없는 경우에 프로그램은 경고 메시지를 남겨야 한다.
+  string reason = 1;
+  // 중지를 발생시키는 타입
+  enum StreamBreaker {
+    // 원인을 알 수 없는 중지
+    BREAK_BY_UNSPECIFIED = 0;
+    // 사용자에 의한 명시적인 중지
+    BREAK_BY_USER = 1;
+    // 클라이언트나 서버의 내부 구조에 의한 중지
+    BREAK_BY_SYSTEM = 2;
+    // Stream 전송 규칙 과정에서 발생하는 논리적인 오류
+    BREAK_BY_LOGICAL = 3;
+    // 예외에 의한 중지
+    // 예를 들어서 음성 데이터를 받아오는 네트워크의 중지에 의한 예외 등
+    BREAK_BY_EXCEPTION = 4;
+  }
+  // 멈춤 메시지 구분자
+  StreamBreaker breaker = 2;
+  // *Optional* 중지시키는 메시지 ID
+  // 중지시키는 메시지 ID는 참고용으로만 사용되므로 유의미하지는
+  // 않다.
+  // 메시지 BREAK가 발생한 이후로 들어오는 모든 bytes, text는
+  // 무시된다.
+  string stream_id = 3;
+  // 중지 시점
+  google.protobuf.Timestamp broken_at = 100;
+}
+
+// ###############################################
+
+//
+// ASYNC INTERFACE 들을 위한 공통 규격
+//
+
+/** 호출되는 대상에 대한 정의
+ * 호출되는 대상은 interface와 operation으로 정의된다.
+ * operation은 단순히 메소드가 아니라 이벤트 메시지이기도 하고
+ * 각 상대방이 처리해야할 메시지이기도 하다.
+ *
+ * 예를 들어, interface는 VideoPlayer 이고 operation 은 stop 이다.
+ */
+message AsyncInterface {
+  /**
+   * operation 타입
+   */
+  enum OperationType {
+    // EVENT 유형, `클라이언트`에서 `MAP`으로 전송된다.
+    OP_EVENT = 0;
+    // DIRECTIVE 유형, `MAP`에서 `클라이언트`로 전송된다.
+    OP_DIRECTIVE = 1;
+  }
+  // 인터페이스 이름
+  // 통상적으로 변수 규칙에 따르고 대문자로 시작하고 Camel Case로 작성한다.
+  // Map과 통신하는 구조에서는 기본으로 제공하는 인터페이스 외에 추가적인 인터페이스가
+  // 존재할 수 있다.
+  // 추가적인 인터페이스에 대해서는 플러그인 형태로 개발할 수 있도록 되어 있다.
+  // TODO, 별도의 문서 위치 지정하도록 한다.
+  string interface = 1;
+  // 오퍼레이션 이름
+  // 각 상대방에서 수행해야 할 작업의 이름이고 인터페이스에 종속적이다.
+  // 이 이름은 동사이거나 발생하는 이벤트의 이름이어야 한다.
+  string operation = 2;
+  // 메시지의 타입은 EVENT 이거나 DIRECTIVE 임.
+  OperationType type = 3;
+  // 스트리밍 여부
+  // operation은 스트리밍 형식이거나 단일 메시지 형식이다.
+  // 스트리밍 형식의 operation은 EventStream, DirectiveStream과 StreamEnd 사이에
+  // 반복적인 BODY 메시지를 전송할 수 있다.
+  // 반복적인 BODY 형식은 string, byte array, meta 형식으로 전송될 수 있다.
+  // EventStream, DirectiveStream과 StreamEnd은 같은 stream_id를 공유한다.
+  // EventEnd를 만나면 해당 스트림은 종료된다.
+  // 스트리밍이 아닌 AsyncInterface 형식을 가진 EventStream이나 DirectiveStream이
+  // 중간에 끼여서 전송될 수 있다. 하지만, 스트리밍 이벤트 중간에 다른 스트리밍 이벤트는
+  // 전송될 수 없다. 만일, 동시에 스트리밍 이벤트는 여러 개 전송해야 하는 경우에는
+  // 새로운 grpc 연결을 사용해서 처리하면 된다.
+  // 이 규칙을 어기고 스트림 형식의 새로운 EventStream이나 DirectiveStream이 들어오면
+  // 현재의 스트림은 자동으로 종료 처리된다.
+  // 스트리밍 프레임들은 StreamBreak 메시지를 통해서 중지될 수 있다.
+  // 이 경우, 스트리밍 프레임은 중지되고, stream_id는 더 이상 유효하지 않게 된다.
+  // 추가적인 스트리밍 BODY는 모두 버려지게 된다.
+  bool streaming = 4;
+}
+
+/**
+ * 비동기인터페이스의 목록
+ */
+message AsyncInterfaceList {
+  repeated AsyncInterface interfaces = 1;
+}
+
+//
+// STREAM PARAMETERS
+//
+
+/**
+ * Video 관련 AsyncInterface를 호출할 때 사용될 수 있는 파라미터.
+ */
+message VideoParam {
+  string video_format = 1;
+  string codec = 2;
+  string todo = 99999; // 더 수정해야 합니다.
+}
+
+/**
+ * 제스터 파라미터
+ */
+message GestureParam {
+  string todo = 99999; // 더 수정해야 합니다.
+}
+
+/**
+ * 키보드 파라미터
+ */
+message KeyboardParam {
+  // 입력 길이
+  int32 typed_length = 1;
+  // 입력 시간
+  google.protobuf.Duration duration = 2;
+}

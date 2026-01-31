@@ -35,6 +35,11 @@ const API_ENDPOINTS = {
   pay: `${KORAIL_MOBILE}.payment.ReservationPayment`,
   refund: `${KORAIL_MOBILE}.refunds.RefundsRequest`,
   code: `${KORAIL_MOBILE}.common.code.do`,
+  ncard_schedule: `${KORAIL_MOBILE}.research.dcntCrdScheduleView.do`,
+  assign_schedule: `${KORAIL_MOBILE}.research.assignScheduleView.do`,
+  ncard_reservation: `${KORAIL_MOBILE}.research.dcntCrdInfo.do`,
+  ncard_history: `${KORAIL_MOBILE}.ticket.dcntCrdUseQry.do`,
+  ncard_extension: `${KORAIL_MOBILE}.reservation.dcntCrdExtn.do`,
 };
 
 // Schedule class
@@ -813,6 +818,199 @@ export class Korail {
     this._log(text);
     const j = JSON.parse(text);
     return this._resultCheck(j);
+  }
+
+  async fetchNCardInfo() {
+    // 기존 티켓 목록에서 N카드 정보를 추출
+    const data = {
+      Device: this._device, Version: this._version, Key: this._key,
+      txtDeviceId: '', txtIndex: '1', h_page_no: '1',
+      h_abrd_dt_from: '', h_abrd_dt_to: '', hiduserYn: 'Y',
+    };
+
+    const r = await this._get(API_ENDPOINTS.myticketlist, data);
+    const text = await r.text();
+    this._log(text);
+    const j = JSON.parse(text);
+    this._resultCheck(j);
+
+    const ncards = [];
+    for (const info of (j.reservation_list || [])) {
+      const ticket = new Ticket(info);
+      // 티켓 상세 조회 (dcnt_crd_info 포함)
+      const detailData = {
+        Device: this._device, Version: this._version, Key: this._key,
+        h_orgtk_wct_no: ticket.saleInfo1,
+        h_orgtk_ret_sale_dt: ticket.saleInfo2,
+        h_orgtk_sale_sqno: ticket.saleInfo3,
+        h_orgtk_ret_pwd: ticket.saleInfo4,
+      };
+      const dr = await this._post(API_ENDPOINTS.myticketseat, detailData);
+      const dt = await dr.text();
+      this._log(dt);
+      const dj = JSON.parse(dt);
+
+      if (dj.strResult === 'SUCC' && dj.dcnt_crd_info) {
+        const crdInfo = dj.dcnt_crd_info;
+        const appSegList = crdInfo.appSegList || [];
+        const dcntCrdKndCd = crdInfo.h_dcnt_crd_knd_cd || '';
+        const remainUses = parseInt(crdInfo.h_noty_use_tno) || 0;
+        const usedCount = parseInt(crdInfo.h_use_tno) || 0;
+        const totalUses = remainUses + usedCount;
+        // dcntCrdKndMgNo 자동 추론
+        // h_dcnt_crd_knd_cd가 "B2N"이면 1구간 V1 (B2N18120402/03)만 해당
+        // 그 외("MMM" 등)는 V2 계열
+        const is2Month = totalUses >= 10 && totalUses <= 20;
+        let dcntCrdKndMgNo = '';
+        if (dcntCrdKndCd === 'B2N') {
+          // 1구간 V1만 dcntCrdKndCd="B2N" 사용
+          dcntCrdKndMgNo = is2Month ? 'B2N18120402' : 'B2N18120403';
+        } else {
+          // MMM (V2) - 구간 수는 appSegList로 추론 불가, 1인/1구간 기본값
+          dcntCrdKndMgNo = is2Month ? 'B2N23100501' : 'B2N23100502';
+        }
+
+        ncards.push({
+          dcntCrdNo: crdInfo.h_dcnt_crd_no,
+          dcntCrdKndCd,
+          dcntCrdKndMgNo,
+          totalUses: String(totalUses),
+          remainUses,
+          usedCount,
+          extnPsbFlg: crdInfo.h_dcnt_crd_trm_extn_psb_flg,
+          appSegList,
+          tkKndCd: dj.h_tk_knd_cd,
+          tkKndNm: dj.h_tk_knd_nm,
+          pnrNo: dj.h_pnr_no,
+          ticket,
+          raw: dj,
+        });
+      }
+    }
+    return ncards;
+  }
+
+  async searchNCardTrain(dep, arr, date, time, { stlbDturDvNm1 = '', psgNum1 = 1, trnGpCd = '109' } = {}) {
+    // 기존 N카드로 열차 조회: assignScheduleView.do 사용 (POST)
+    // menuId="A2" (N카드), psrmClCd="9" (전체), seatAttCd1="015" (일반석)
+    const kstNow = new Date();
+    const todayDate = _formatDate(kstNow);
+    const searchDate = date && date >= todayDate ? date : todayDate;
+    const searchTime = searchDate === todayDate ? _formatTime(kstNow) : '000000';
+
+    const data = {
+      Device: this._device, Version: this._version, Key: this._key,
+      menuId: 'A2',
+      dptDt: searchDate,
+      dptTm: time || searchTime,
+      dptRsStnNm: dep,
+      arvRsStnNm: arr,
+      trnGpCd,
+      psrmClCd: '9',
+      seatAttCd1: '015',
+      psgNum1,
+      stlbDturDvNm1: stlbDturDvNm1,
+      dirtChtnDvCd: '1',
+      chtnArvRsStnNm: '',
+    };
+
+    const r = await this._post(API_ENDPOINTS.assign_schedule, data);
+    const text = await r.text();
+    this._log(text);
+    const j = JSON.parse(text);
+    if (this._resultCheck(j)) {
+      const trainInfos = j.trn_infos?.trn_info || [];
+      return { trains: trainInfos, hasNextPage: j.h_next_pg_flg === 'Y', raw: j };
+    }
+  }
+
+  async reserveNCard({ dcntCrdKndMgNo, custMgNo, vlidTrmStDt, usePsbTno, jrnyInfo = {}, apdUsrInfo = {} } = {}) {
+    const data = {
+      Device: this._device, Version: this._version, Key: this._key,
+      dcntCrdKndMgNo: dcntCrdKndMgNo || '',
+      custMgNo: custMgNo || this.membershipNumber || '',
+      vlidTrmStDt: vlidTrmStDt || '',
+      usePsbTno: usePsbTno || '',
+      ...jrnyInfo,
+      ...apdUsrInfo,
+    };
+
+    const r = await this._post(API_ENDPOINTS.ncard_reservation, data);
+    const text = await r.text();
+    this._log(text);
+    const j = JSON.parse(text);
+    this._resultCheck(j);
+    return j;
+  }
+
+  async reserveWithNCard(trainData, dcntCrdNo, psrmClCd = '1') {
+    // 기존 N카드로 예약: 일반 예약 API (TicketReservation)에 할인코드 153 + 카드번호
+    // Java: d4/a.java getNCardReservationRequest(TicketDetailResponse, SeatAssignData)
+    const data = {
+      Device: this._device, Version: this._version, Key: this._key,
+      txtMenuId: 'A2',
+      txtJobId: '1101',
+      txtGdNo: '',
+      hidFreeFlg: 'N',
+      txtStndFlg: 'N',
+      txtSrcarCnt: '0',
+      // Seat attributes (from d4/a.java b() method)
+      txtSeatAttCd1: '000',   // q.DISABLE
+      txtSeatAttCd2: '000',   // l.DEFAULT
+      txtSeatAttCd3: '000',   // n.DEFAULT
+      txtSeatAttCd4: '015',   // p.DEFAULT (일반석)
+      txtSeatAttCd5: '000',   // m.DISABLE
+      // Passenger (1명, 할인코드 153 = N카드)
+      txtTotPsgCnt: '1',
+      txtPsgTpCd1: '1',
+      txtDiscKndCd1: '153',
+      txtCompaCnt1: '1',
+      txtCardCode_1: '',
+      txtCardNo_1: dcntCrdNo,
+      txtCardPw_1: '',
+      // Journey
+      txtJrnyCnt: '1',
+      txtJrnySqno1: '001',
+      txtJrnyTpCd1: '11',
+      txtDptDt1: trainData.h_dpt_dt,
+      txtDptRsStnCd1: trainData.h_dpt_rs_stn_cd,
+      txtDptTm1: trainData.h_dpt_tm,
+      txtArvRsStnCd1: trainData.h_arv_rs_stn_cd,
+      txtTrnNo1: trainData.h_trn_no,
+      txtRunDt1: trainData.h_run_dt,
+      txtTrnClsfCd1: trainData.h_trn_clsf_cd,
+      txtTrnGpCd1: trainData.h_trn_gp_cd,
+      txtPsrmClCd1: psrmClCd,  // '1'=일반실, '2'=특실
+      txtChgFlg1: '',
+      // Empty second journey
+      txtJrnySqno2: '', txtJrnyTpCd2: '', txtDptDt2: '',
+      txtDptRsStnCd2: '', txtDptTm2: '', txtArvRsStnCd2: '',
+      txtTrnNo2: '', txtRunDt2: '', txtTrnClsfCd2: '',
+      txtPsrmClCd2: '', txtChgFlg2: '',
+    };
+
+    const r = await this._get(API_ENDPOINTS.reserve, data);
+    const text = await r.text();
+    this._log(text);
+    const j = JSON.parse(text);
+    if (this._resultCheck(j)) {
+      const rsvId = j.h_pnr_no;
+      return this.reservations(rsvId);
+    }
+    throw new KorailError('N카드 예약 실패');
+  }
+
+  async getNCardHistory(dcntCrdNo) {
+    const data = {
+      Device: this._device, Version: this._version, Key: this._key,
+      dcntCrdNo,
+    };
+    const r = await this._get(API_ENDPOINTS.ncard_history, data);
+    const text = await r.text();
+    this._log(text);
+    const j = JSON.parse(text);
+    this._resultCheck(j);
+    return j;
   }
 
   clear() {

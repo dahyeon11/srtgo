@@ -1,0 +1,152 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+import "maum/common/lang.proto";
+import "maum/common/types.proto";
+import "maum/brain/stt/speech.proto";
+
+package maum.brain.stt;
+
+message Speech {
+  bytes bin = 1;
+}
+
+message Text {
+  string txt = 1;
+}
+
+// MLF : master label files
+message MasterLabelFragment {
+  int32 start = 1;
+  int32 end = 2;
+  string txt = 3; // utf8
+  float likelihood = 4;
+}
+
+message Segment {
+  int32 start = 1;
+  int32 end = 2;
+  string txt = 3;
+}
+
+message DetailText {
+  string txt = 1;
+  repeated Segment segments = 2; // utf8
+  repeated MasterLabelFragment fragments = 101; // utf8
+  bytes raw_mlf = 102; // euckr
+}
+
+//
+// the following service should meta datas
+//
+// in.lang = (kor, eng)
+// in.samplerate = 16000, 8000, default 8000
+// in.model = default or weather baseline and so on
+// in.seconds = integer , real seconds of stream
+//
+// When calling the DetailRecongnize function, send bottom meta data
+// in.require.raw_mlf = raw mlf
+//
+
+// header
+service SpeechToTextService {
+  rpc SimpleRecognize (stream Speech) returns (Text);
+  // in.unsegment.pause.ms :: pause milli-second for unsegment, if not 0
+  rpc DetailRecognize (stream Speech) returns (DetailText);
+  rpc StreamRecognize (stream Speech) returns (stream Segment);
+
+  // DO NOT USE meta data
+  // it uses, oneof features of proto
+  // first message has param, second content
+  rpc StreamingRecognize (stream StreamingRecognizeRequest) returns (stream StreamingRecognizeResponse);
+}
+
+// Query to query the STT server
+message Model {
+  string model = 1;
+  int32 sample_rate = 2;
+  maum.common.LangCode lang = 3;
+}
+
+// List of STT models
+message ModelList {
+  repeated Model models = 1;
+}
+
+// Information about the categorizer server
+message ServerStatus {
+  string model = 1;
+  int32 sample_rate = 2;
+  maum.common.LangCode lang = 3;
+
+  bool running = 10;
+  string server_address = 20;
+  string invoked_by = 21;
+}
+
+message ServerStatusList {
+  repeated ServerStatus servers = 1;
+}
+
+message ModelBinary {
+  string model = 1;
+  int32 sample_rate = 2;
+  maum.common.LangCode lang = 3;
+  bytes tar = 10;
+}
+
+enum SetModelResult {
+  CL_SETMODEL_SUCCESS = 0;
+  CL_SETMODEL_FAILED = 1;
+  CL_SETMODEL_SUCCESS_RESTART = 2;
+  CL_SETMODEL_SUCCESS_NOTSTARTED = 3;
+}
+
+message SetModelResponse {
+  string model = 1;
+  int32 sample_rate = 2;
+  maum.common.LangCode lang = 3;
+  SetModelResult result = 10;
+  string error = 100;
+}
+
+// Classifier Classifier Launcher Server
+service SttModelResolver {
+  rpc Find (Model) returns (ServerStatus);
+  rpc GetModels (google.protobuf.Empty) returns (ModelList);
+  rpc GetServers (google.protobuf.Empty) returns (ServerStatusList);
+  rpc Stop (Model) returns (ServerStatus);
+  rpc Restart (Model) returns (ServerStatus);
+  rpc Ping (Model) returns (ServerStatus);
+
+  // in.filename = BASE64 encoded string
+  // in.lang = (kor, eng)
+  // in.model = default or weather baseline and so on
+  // in.samplerate = 16000, 8000, default 8000
+  rpc SetModel (stream maum.common.FilePart) returns (SetModelResponse);
+  rpc DeleteModel (Model) returns (ServerStatus);
+}
+
+//
+//
+// the following service should meta datas
+//
+// in.seconds = integer , real seconds of stream
+//
+// When calling the DetailRecongnize function, send bottom meta data
+// in.require.raw_mlf = raw mlf
+//
+
+// Stt Real Service
+service SttRealService {
+  rpc Ping (Model) returns (ServerStatus);
+  rpc SimpleRecognize (stream Speech) returns (Text);
+  // in.unsegment.pause.ms :: pause milli-second for unsegment, if not 0
+  rpc DetailRecognize (stream Speech) returns (DetailText);
+  rpc StreamRecognize (stream Speech) returns (stream Segment);
+
+  // DO NOT USE meta data
+  // it uses, oneof features of proto
+  // first message has param, second content
+  rpc StreamingRecognize (stream StreamingRecognizeRequest) returns (stream StreamingRecognizeResponse);
+}

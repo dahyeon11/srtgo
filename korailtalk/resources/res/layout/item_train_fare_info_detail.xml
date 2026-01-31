@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.korail.talk.view.CTextView
+        android:textSize="13sp"
+        android:textColor="#000000"
+        android:id="@+id/tv_item_seat_info_img"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/dialog_service_fare_info_detail"
+        android:paddingVertical="5dp"/>
+</LinearLayout>

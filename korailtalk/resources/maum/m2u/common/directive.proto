@@ -1,0 +1,318 @@
+/**
+ * maum.ai M2U 플랫폼, 대화 진행에 관련된 디렉티브 타입 데이터 정의
+ *
+ * 여기에 정의된 디렉티브들은 dilaog agent에서 router를 경유하여 map으로 전송한다.
+ * map에서는 이들 directive을 각각 정의된 interface/operation으로 전달해야 한다.
+ *
+ * namespace: maum.m2u.common
+ */
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/duration.proto";
+import "maum/m2u/common/event.proto";
+
+package maum.m2u.common;
+
+// ----------------------------------------------------------------------
+// 디렉티브
+// ----------------------------------------------------------------------
+
+/**
+ * DA에서 단말로 내려보내는 디렉티브의 구조
+ */
+message Directive {
+  // Directive의 interface
+  string interface = 1;
+  // Directive의 operation
+  string operation = 2;
+  // DA에서 단말로 전달할 chatbot, skill, intent, lang, session_id 정보
+  DialogAgentForwarderParam param = 3;
+
+  //Directive Payload 정보
+  message DirectivePayload {
+    oneof test_payload {
+      // Audio play payload 정의
+      AudioPlayPayload audio_play = 11;
+      // Video play payload 정의
+      VideoPlayPayload video_play = 12;
+      // AvatarSetExpression payload 정의
+      AvatarSetExpressionPayload avatar_set_expression = 13;
+      // Clova Audio Play Payload 정의
+      AudioPlayClovaPayload clova_audio_play = 14;
+      // Launcher View Map Payload 정의 (지도표시)
+      LauncherViewMapPayload launcher_view_map_payload = 15;
+      // 클라이언트에게 특정한 APP을 실행하도록 명령한다.
+      LauncherLaunchAppPayload launcher_launch_app_payload = 16;
+      // 클라이언트에게 특정한 APP을 실행하도록 명령한다.
+      LauncherLaunchPagePayload launcher_launch_page_payload = 17;
+    }
+  }
+  // Directive의 payload
+  DirectivePayload payload = 4;
+}
+
+/**
+ * 지도표시를 위한 페이로드
+ */
+message LauncherViewMapPayload {
+  // 검색범위, 반경, 반경 1km 이내 등과 같은 자연어 표현식
+  string search_range = 1;
+  // 검색 목적물: ATM, 지점
+  string search_object = 2;
+  // 검색어 : 영등포지점
+  string search_keyword = 3;
+}
+
+// DA에서 단말로 내려보내주는 PAYLOAD
+
+// 아바타 출력을 위한 페이로드
+message AvatarSetExpressionPayload {
+  // 아바타 출력 장치 정의
+  // target에 어느 장치에 출력을 할지 정의한다
+  string target = 1;
+  // 화면에 표현데이터
+  string expression = 2;
+  // 표현 데이터에 대한 설명
+  string desciption = 3;
+}
+
+// 오디오 출력을 위한 페이로드
+// 사용자에게 오디오 스트림또는 오디오 파일을 스피커로 출력하도록 지시한다.
+message AudioPlayPayload {
+  // 오디오 스트림의 정보
+  message Stream {
+    // 오디오의 id
+    string id = 1;
+    // 오디오 위치
+    string url = 11;
+    // 오디오의 재생 시간
+    google.protobuf.Duration play_time = 12;
+  }
+  //재생할 오디오 스트림의 정보
+  Stream stream = 1;
+
+  // 부가 정보의 위치
+  message Sources {
+    // 부가정보 위치
+    repeated string urls = 1;
+  }
+  // 오디오의 부가 정보
+  message Metadata {
+    // 오디오의 title
+    string title = 1;
+    // 오디오의 subtitle 정보
+    string subtitle = 2;
+    // 오디오의 artist 정보
+    Sources art = 11;
+    // 오디오의 background_image 정보
+    Sources background_image = 12;
+  }
+  // 오디오의 부가 정보 (audio의 title, subtitle, art, background_image)
+  Metadata metadata = 2;
+}
+
+// Clova 오디오 출력을 위한 페이로드
+message AudioPlayClovaPayload {
+  // directive body 선언
+  message DirectiveBody {
+    // 제휴사 구분 코드
+    string service_name = 1;
+    // Play 정보 제공
+    // REPLACE_ALL : 현재 스트림과 대기열에 있는 스트림을 즉시 바꾼 후 플레이 한다
+    // ENQUE : 스트림을 현재 큐 끝에 추가한다.
+    // REPLACE_ENQUE : 대기열의 모든 스트림을 바꾸며 현재 재생 중인 스트림에는 영향을 주지 않는다.
+    string play_behavior = 2;
+    // Play 중인 경우 offset 정보를 전송 하기 위한 주기 정보(초 단위)
+    string progress_report_interval = 3;
+    // Play 해야 할 List의 Index
+    string play_index = 4;
+    // Play List Count
+    int32 play_list_count = 5;
+  }
+  // directive body 선언
+  DirectiveBody directive_body = 1;
+
+  // playList에 전달될 오디오 아이템에 대한 메타 정보
+  message MetaInfo {
+    // tem.url 의 만료(유효) 시간
+    string expiry_time = 1;
+    // 앨범 ID/팟캐트 ID/방송국 ID/뉴스 타입 ID
+    string category_id = 2;
+    // 앨범 명/팟캐트 명/방송국 명/뉴스 타입 명
+    string category_name = 3;
+    // 곡 명/에피소드 명/라디오 채널 명/뉴스 채널 명
+    string audio_name = 4;
+    // 장르 코드/분야 코드
+    string genre_id = 5;
+    // 장르 명/분야 명
+    string genre_name = 6;
+    // 가수 명/진행자 명
+    string artist_name = 7;
+    // 가수 아이디/진행자 아이디
+    string artist_id = 8;
+    // 성인 컨텐츠 여부
+    string is_adult_yn = 9;
+    // 앨범 이미지
+    string image_url = 10;
+    // 좋아요 여부
+    string is_like = 11;
+    // 좋아요 숫자
+    int32 like_count = 12;
+    // 오디오의 재생 시간
+    google.protobuf.Duration running_time = 13;
+    // 컨텐츠 생성일
+    string created_date = 14;
+    // 컨텐츠 수정일
+    string update_date = 15;
+  }
+
+  // Play List 정보
+  message PlayList {
+    // 아이템 정보
+    message Item {
+      // List의 Index
+      string index = 1;
+      // 현재 오디오에 식별 정보를 제공.
+      // 곡 ID/에피소드 ID/라디오 채널 ID/뉴스 채널 ID
+      string item_id = 2;
+      // 오디오 Play Url
+      string url = 3;
+      // 지시어를 수행 하기전 Delay 해야 할 시간 (ms 단위)
+      string interval_time = 4;
+      // 스트림에서 오디오가 재생을 시작해야하는 위치정보이며 값이 0일 경우 처음부터 재생하며
+      // 다른값이 오면 그값부터 재생을 시작.(ms 단위)
+      string offset_play_in_time = 5;
+      // 오디오 아이템에 대한 메타 정보
+      MetaInfo meta_info = 6;
+    }
+    repeated Item item = 1;
+  }
+  PlayList play_list = 2;
+}
+
+/**
+ * 오디오 출력의 중지
+ */
+message AudioStopPayload {
+  // 중지할 audio id
+  string id = 1;
+  // 이유
+  string reason = 11;
+}
+
+
+/**
+ * 비디오 출력을 위한 페이로드
+ */
+message VideoPlayPayload {
+  // video id
+  string id = 1;
+  // video title
+  string title = 2;
+  // video 위치 url
+  string url = 11;
+  // video 재생 시간
+  google.protobuf.Duration play_time = 12;
+}
+
+// 단말에 대화 처리에 대한 일부 데이터 위임을 하는 경우에 대한 처리
+// 모든 처리를 SKIP하기 위해서 최대한 상세한 정보를 넘겨주도록 한다.
+
+/**
+ * 대화 위임을 위한 Directive 데이터
+ */
+message DelegateDirective {
+  string interface = 1;
+  string operation = 2;
+  DialogAgentForwarderParam param = 3;
+  message DelegateDirectivePayload {
+    oneof test_payload {
+      LauncherAuthorizePayload launcher_authorize = 13;
+      LauncherFillSlotsPayload launcher_fill_slots = 14;
+      LauncherReadDocumentPayload launcher_read_document = 15;
+    }
+  }
+  DelegateDirectivePayload payload = 4;
+}
+
+/**
+ * 문서를 읽은 결과 처리하기 위한 페이로드
+ */
+message LauncherReadDocumentPayload {
+  // 문서 id
+  string id = 1;
+  // 문서 url
+  string document_url = 2;
+  // 문서 title
+  string title = 3;
+  // 문서 sub_titile
+  string sub_title = 4;
+}
+
+/**
+ * 인증 처리를 위한 페이로드
+ */
+message LauncherAuthorizePayload {
+  // 사용할 인증 제공자
+  string provider = 1;
+  // 인증 방법
+  string method = 2;
+
+  // 인증을 위한 추가파라미터
+  google.protobuf.Struct meta = 100;
+}
+
+/**
+ * 단말 정보 획득 위한 페이로드
+ */
+message LauncherFillSlotsPayload {
+  // 채워진 슬롯 정보들
+  google.protobuf.Struct filled_slots = 21;
+  // 요청하는 슬롯 정보들
+  repeated string requesting_slots = 22;
+}
+
+
+/**
+ * 클라이언트에게 LaunchApp을 실행하는 경우
+ * interface: Launcher
+ * operation: LaunchApp
+ */
+message LauncherLaunchAppPayload {
+  // 실행 대상 정보
+  string target = 1;
+  // 실행 대상의 내부 실행 정보
+  string uri = 2;
+  // 실행 대상에게 전달되어야할 상세한 파라미터
+  google.protobuf.Struct meta = 3;
+
+  // 실행 환경 정보
+  // OS, VERSION, 기타 정보
+  string runtime_env = 11;
+  // 이 실행이 가지는 추가적인 설명 정보
+  string description = 12;
+}
+
+
+/**
+ * 클라이언트에게 LaunchPage을 실행하는 경우
+ * 주로 웹 브라우저인 M2U 단말이 실행을 가능성이 높습니다.
+ *
+ * interface: Launcher
+ * operation: LaunchPage
+ */
+message LauncherLaunchPagePayload {
+  // 실행 대상 정보 : browser target
+  string target = 1;
+  // 실행 대상의 내부 실행 정보
+  string uri = 2;
+  // 실행 대상에게 전달되어야할 상세한 파라미터
+  google.protobuf.Struct meta = 3;
+
+  // 브라우저 환경 정보
+  // 브라우저 VERSION, 기타 정보
+  string brower_env = 11;
+  // 이 페이지 실행이 가지는 추가적인 설명 정보
+  string description = 12;
+}

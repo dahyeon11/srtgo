@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <com.korail.talk.view.CButton
+        android:id="@+id/btn_dialog_negative"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        style="@style/ButtonBottomDialogBlue"/>
+    <View
+        android:id="@+id/v_dialog_neutral_divider"
+        android:background="#ffb6c1ca"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"/>
+    <com.korail.talk.view.CButton
+        android:id="@+id/btn_dialog_neutral"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        style="@style/ButtonBottomDialogBlue"/>
+    <View
+        android:id="@+id/v_dialog_positive_divider"
+        android:background="#ffb6c1ca"
+        android:layout_width="1dp"
+        android:layout_height="match_parent"/>
+    <com.korail.talk.view.CButton
+        android:id="@+id/btn_dialog_positive"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        style="@style/ButtonBottomDialogBlue"/>
+</LinearLayout>

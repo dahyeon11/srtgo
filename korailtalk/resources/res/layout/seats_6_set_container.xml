@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/contentContainer"
+    android:paddingBottom="150dp"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <FrameLayout
+        android:orientation="vertical"
+        android:id="@+id/leftWinContainer"
+        android:layout_width="6dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="7dp"
+        android:layout_alignTop="@+id/seatsGrid"
+        android:layout_alignParentLeft="true"/>
+    <FrameLayout
+        android:orientation="vertical"
+        android:id="@+id/rightWinContainer"
+        android:layout_width="6dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="7dp"
+        android:layout_marginRight="20dp"
+        android:layout_alignParentRight="true"/>
+    <androidx.gridlayout.widget.GridLayout
+        android:id="@+id/seatsGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="99.5dp"
+        android:layout_marginRight="61.5dp"
+        app:columnCount="4">
+        <View
+            android:layout_width="55dp"
+            android:layout_height="7dp"/>
+        <View
+            android:layout_width="55dp"
+            android:layout_height="7dp"/>
+        <View
+            android:layout_width="55dp"
+            android:layout_height="7dp"/>
+        <View
+            android:layout_width="0dp"
+            android:layout_height="7dp"
+            app:layout_columnWeight="1"/>
+    </androidx.gridlayout.widget.GridLayout>
+</RelativeLayout>

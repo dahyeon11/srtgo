@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <com.journeyapps.barcodescanner.DecoratedBarcodeView
+        android:id="@+id/zxing_barcode_scanner"
+        android:background="@color/black_two"
+        android:paddingLeft="30dp"
+        android:paddingTop="150dp"
+        android:paddingRight="30dp"
+        android:paddingBottom="150dp"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:paddingHorizontal="30dp"
+        android:paddingVertical="150dp"
+        app:zxing_preview_scaling_strategy="fitXY"
+        app:zxing_use_texture_view="false"/>
+    <com.korail.talk.view.CButton
+        android:id="@+id/btn_bottom"
+        android:visibility="gone"
+        android:text="@string/common_close_btn"
+        android:layout_alignParentBottom="true"
+        style="@style/ButtonBottomBlue"/>
+</RelativeLayout>

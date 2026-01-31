@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="center_vertical"
+    android:orientation="vertical"
+    android:background="@color/white_two"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="24dp"
+        android:layout_marginRight="24dp"
+        android:layout_marginHorizontal="24dp">
+        <include
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            layout="@layout/include_dialog_title"/>
+        <include layout="@layout/include_dialog_title_divider"/>
+    </LinearLayout>
+    <androidx.core.widget.NestedScrollView
+        android:paddingLeft="24dp"
+        android:paddingTop="18dp"
+        android:paddingRight="24dp"
+        android:paddingBottom="18dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="18dp">
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <include layout="@layout/include_dialog_message"/>
+            <com.korail.talk.view.CEditText
+                android:id="@+id/couponNoEdit"
+                android:layout_marginTop="14dp"
+                android:hint="@string/dialog_business_trip_coupon_number"
+                android:inputType="numberDecimal"
+                style="@style/PurpleEditText"/>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+    <include layout="@layout/include_dialog_bottom"/>
+</LinearLayout>

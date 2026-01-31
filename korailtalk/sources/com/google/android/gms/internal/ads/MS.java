@@ -1,0 +1,8 @@
+package com.google.android.gms.internal.ads;
+
+/* loaded from: classes2.dex */
+abstract class MS {
+
+    /* renamed from: a, reason: collision with root package name */
+    private static final OS f14662a = new OS();
+}

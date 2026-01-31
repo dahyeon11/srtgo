@@ -751,6 +751,284 @@ async function checkReservation(railType = 'SRT', debug = false) {
   }
 }
 
+// N카드 할인 예매 (실험적 기능)
+async function ncardReserve(debug = false) {
+  const rail = await login('KTX', debug);
+
+  const now = new Date(Date.now() + 10 * 60 * 1000);
+  const today = formatDate(now);
+  const thisTime = formatTime(now);
+
+  // Date choices (next 28 days)
+  const dateChoices = [];
+  for (let i = 0; i < 28; i++) {
+    const d = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const label = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')} ${days[d.getDay()]}`;
+    dateChoices.push({ name: label, value: formatDate(d) });
+  }
+
+  const timeChoices = [];
+  for (let h = 0; h < 24; h++) {
+    timeChoices.push({ name: String(h).padStart(2, '0'), value: `${String(h).padStart(2, '0')}0000` });
+  }
+
+  // 1) 기존 티켓에서 N카드 정보 자동 조회
+  console.log(chalk.cyan('\n보유 N카드 정보 조회 중...'));
+  let ncards = [];
+  try {
+    ncards = await rail.fetchNCardInfo();
+  } catch (e) {
+    console.log(chalk.yellow(`N카드 조회 실패: ${e.message}`));
+    if (e.code) console.log(chalk.yellow(`코드: ${e.code}`));
+    if (debug && e.stack) console.error(chalk.gray(e.stack));
+  }
+
+  if (ncards.length) {
+    console.log(chalk.green(`\nN카드 ${ncards.length}건 발견:`));
+    for (const nc of ncards) {
+      const segs = (nc.appSegList || []).map(s => `${s.dptRsStnNm}→${s.arvRsStnNm}`).join(', ');
+      console.log(chalk.white(`  카드번호: ${nc.dcntCrdNo} | ${nc.tkKndNm} | 잔여 ${nc.remainUses}/${nc.totalUses}회 | 구간: ${segs}`));
+      console.log(chalk.gray(`  추론 관리번호: ${nc.dcntCrdKndMgNo} (${nc.dcntCrdKndCd})`));
+      if (debug) console.log(chalk.gray(`  raw: ${JSON.stringify(nc.raw, null, 2)}`));
+    }
+  } else {
+    console.log(chalk.yellow('보유 N카드가 없습니다. 직접 입력으로 진행합니다.'));
+  }
+
+  // N카드 선택 또는 직접 입력
+  let selectedNCard = null;
+  if (ncards.length) {
+    const ncardChoices = ncards.map((nc, i) => {
+      const segs = (nc.appSegList || []).map(s => `${s.dptRsStnNm}→${s.arvRsStnNm}`).join(', ');
+      return { name: `[${nc.dcntCrdNo}] ${nc.tkKndNm} 잔여${nc.remainUses}회 (${segs})`, value: i };
+    });
+    ncardChoices.push({ name: '직접 입력', value: -1 });
+    const { ncardIdx } = await inquirer.prompt([{
+      type: 'list', name: 'ncardIdx', message: '사용할 N카드 선택',
+      choices: ncardChoices,
+    }]);
+    if (ncardIdx >= 0) selectedNCard = ncards[ncardIdx];
+  }
+
+  if (!selectedNCard) {
+    console.log(chalk.yellow('보유 N카드를 선택해야 합니다.'));
+    return;
+  }
+
+  const ncardData = selectedNCard;
+  console.log(chalk.green(`N카드 선택 - 카드번호: ${ncardData.dcntCrdNo}, 잔여: ${ncardData.remainUses}회`));
+
+  // 구간 선택 (appSegList + 역방향 포함)
+  const origSegList = ncardData.appSegList || [];
+  if (!origSegList.length) {
+    console.log(chalk.red('N카드에 등록된 구간이 없습니다.'));
+    return;
+  }
+
+  // 정방향 + 역방향 구간 생성
+  const segList = [];
+  for (const s of origSegList) {
+    segList.push(s);
+    segList.push({
+      ...s,
+      dptRsStnNm: s.arvRsStnNm,
+      arvRsStnNm: s.dptRsStnNm,
+      _reversed: true,
+    });
+  }
+
+  let selectedSeg;
+  {
+    const segChoices = segList.map((s, i) => ({
+      name: `${s.dptRsStnNm}→${s.arvRsStnNm} (${s.stlbDturDvNm || ''})`,
+      value: i,
+    }));
+    const { segIdx } = await inquirer.prompt([{
+      type: 'list', name: 'segIdx', message: '이용할 구간 선택',
+      choices: segChoices,
+    }]);
+    selectedSeg = segList[segIdx];
+  }
+
+  const departure = selectedSeg.dptRsStnNm;
+  const arrival = selectedSeg.arvRsStnNm;
+  const stlbDturDvNm1 = selectedSeg.stlbDturDvNm || '';
+  const trnGpCd = selectedSeg.trnGpCd || '109';
+
+  // 날짜/시각 선택
+  const ncardInfo = await inquirer.prompt([
+    { type: 'list', name: 'date', message: `출발 날짜 (${departure}→${arrival})`, choices: dateChoices, default: today },
+    { type: 'list', name: 'time', message: '출발 시각', choices: timeChoices, default: config.get('KTX.time') || '120000' },
+  ]);
+
+  // Adjust time
+  let searchTime = ncardInfo.time;
+  if (ncardInfo.date === today && parseInt(searchTime) < parseInt(thisTime)) {
+    searchTime = thisTime;
+  }
+
+  // 1) N카드 열차 조회 (assignScheduleView.do)
+  console.log(chalk.cyan(`\nN카드 열차 조회 중... (${departure}→${arrival})`));
+  let result;
+  try {
+    result = await rail.searchNCardTrain(departure, arrival, ncardInfo.date, searchTime, {
+      stlbDturDvNm1,
+      trnGpCd,
+      psgNum1: 1,
+    });
+  } catch (e) {
+    console.log(chalk.red(`N카드 열차 조회 실패`));
+    console.error(chalk.yellow(`에러: ${e.message}`));
+    if (e.code) console.error(chalk.yellow(`코드: ${e.code}`));
+    if (debug && e.stack) console.error(chalk.gray(e.stack));
+    return;
+  }
+
+  const trains = result.trains;
+  if (!trains || !trains.length) {
+    console.log(chalk.red('N카드 할인 가능한 열차가 없습니다'));
+    if (debug) console.log(chalk.gray(JSON.stringify(result.raw, null, 2)));
+    return;
+  }
+
+  // Display trains (assignScheduleView returns trn_info format like regular search)
+  const trainChoices = trains.map((t, i) => {
+    const depTime = `${(t.h_dpt_tm || '').slice(0, 2)}:${(t.h_dpt_tm || '').slice(2, 4)}`;
+    const arrTime = `${(t.h_arv_tm || '').slice(0, 2)}:${(t.h_arv_tm || '').slice(2, 4)}`;
+    const trnNm = (t.h_trn_clsf_nm || '').slice(0, 3);
+    const discountInfo = t.h_rsv_psb_nm || '';
+    const genOk = (t.h_gen_rsv_cd || '').trim() === '11';
+    const speOk = (t.h_spe_rsv_cd || '').trim() === '11';
+    const seatStatus = `특실:${speOk ? chalk.green('가능') : chalk.red('매진')} 일반:${genOk ? chalk.green('가능') : chalk.red('매진')}`;
+    const label = `[${trnNm} ${t.h_trn_no || ''}] ${depTime}~${arrTime} ${t.h_dpt_rs_stn_nm || ''}→${t.h_arv_rs_stn_nm || ''} ${seatStatus} ${discountInfo}`;
+    return { name: label, value: i };
+  });
+
+  const { selectedTrains } = await inquirer.prompt([{
+    type: 'checkbox', name: 'selectedTrains',
+    message: 'N카드 예약할 열차 선택 (Space: 선택, Enter: 완료)',
+    choices: trainChoices, pageSize: 15,
+  }]);
+
+  if (!selectedTrains || !selectedTrains.length) {
+    console.log(chalk.red('선택한 열차가 없습니다.'));
+    return;
+  }
+
+  // 좌석 유형 선택
+  const { seatType } = await inquirer.prompt([{
+    type: 'list', name: 'seatType', message: '좌석 유형 선택',
+    choices: [
+      { name: '일반실 우선', value: 'GENERAL_FIRST' },
+      { name: '일반실만', value: 'GENERAL_ONLY' },
+      { name: '특실 우선', value: 'SPECIAL_FIRST' },
+      { name: '특실만', value: 'SPECIAL_ONLY' },
+    ],
+  }]);
+
+  // 카드 결제 여부
+  const { pay } = await inquirer.prompt([{
+    type: 'confirm', name: 'pay', message: '예매 시 카드 결제', default: false,
+  }]);
+
+  // 좌석 가용 체크 함수
+  function getNCardPsrmClCd(t, st) {
+    const hasGen = (t.h_gen_rsv_cd || '').trim() === '11';
+    const hasSpe = (t.h_spe_rsv_cd || '').trim() === '11';
+    if (st === 'GENERAL_ONLY') return hasGen ? '1' : null;
+    if (st === 'SPECIAL_ONLY') return hasSpe ? '2' : null;
+    if (st === 'GENERAL_FIRST') return hasGen ? '1' : hasSpe ? '2' : null;
+    return hasSpe ? '2' : hasGen ? '1' : null; // SPECIAL_FIRST
+  }
+
+  // 예약 성공 처리 함수
+  async function doNCardReserve(train) {
+    const psrmClCd = getNCardPsrmClCd(train, seatType);
+    if (!psrmClCd) return false;
+    const reservation = await rail.reserveWithNCard(train, ncardData.dcntCrdNo, psrmClCd);
+    const seatLabel = psrmClCd === '2' ? '특실' : '일반실';
+    let msg = reservation.toString();
+    if (reservation.tickets && reservation.tickets.length) {
+      msg += '\n' + reservation.tickets.map(t => t.toString()).join('\n');
+    }
+    console.log(chalk.green(`\n\n🎫 N카드 예매 성공! (${seatLabel})\n${msg}\n`));
+
+    if (pay && !reservation.isWaiting) {
+      const paid = await payCard(rail, reservation, debug);
+      if (paid) {
+        console.log(chalk.green('\n💳 결제 성공!\n'));
+        msg += '\n결제 완료';
+      }
+    }
+    await sendTelegram(`N카드 예매 성공!\n${msg}`);
+    return true;
+  }
+
+  // 에러 처리 함수
+  async function handleNCardError(ex) {
+    const errMsg = `\nException: ${ex.constructor.name}, Message: ${ex.msg || ex.message || ''}`;
+    console.log(errMsg);
+    await sendTelegram(errMsg);
+    const { cont } = await inquirer.prompt([{ type: 'confirm', name: 'cont', message: '계속할까요', default: true }]);
+    return cont;
+  }
+
+  // 반복 예매 루프
+  let iTry = 0;
+  const startTime = Date.now();
+  while (true) {
+    try {
+      iTry++;
+      const elapsed = Math.floor((Date.now() - startTime) / 1000);
+      const hours = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+      const minutes = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+      const seconds = String(elapsed % 60).padStart(2, '0');
+      process.stdout.write(`\rN카드 예매 대기 중... ${WAITING_BAR[iTry & 3]} ${String(iTry).padStart(4)} (${hours}:${minutes}:${seconds}) `);
+
+      result = await rail.searchNCardTrain(departure, arrival, ncardInfo.date, searchTime, {
+        stlbDturDvNm1, trnGpCd, psgNum1: 1,
+      });
+
+      const currentTrains = result.trains || [];
+      for (const idx of selectedTrains) {
+        if (idx < currentTrains.length) {
+          const t = currentTrains[idx];
+          if (getNCardPsrmClCd(t, seatType)) {
+            if (await doNCardReserve(t)) return;
+          }
+        }
+      }
+      await sleepInterval();
+
+    } catch (ex) {
+      if (ex instanceof KorailError) {
+        const msg = ex.msg || '';
+        if (msg.includes('Need to Login')) {
+          rail = await login('KTX', debug);
+          if (!rail.isLogin && !(await handleNCardError(ex))) return;
+        } else if (['Sold out', 'No Results', '잔여석없음'].some(e => msg.includes(e))) {
+          // 매진/결과없음은 계속 대기
+        } else {
+          if (!(await handleNCardError(ex))) return;
+        }
+        await sleepInterval();
+      } else if (ex.name === 'SyntaxError' || ex.message?.includes('JSON')) {
+        if (debug) console.log(`\nJSON parse error: ${ex.message}`);
+        await sleepInterval();
+        rail = await login('KTX', debug);
+      } else if (ex.code === 'ECONNRESET' || ex.code === 'ETIMEDOUT' || ex.message?.includes('fetch')) {
+        if (!(await handleNCardError(ex))) return;
+        rail = await login('KTX', debug);
+      } else {
+        if (debug) console.log(`\nUndefined exception: ${ex.message}`);
+        if (!(await handleNCardError(ex))) return;
+        rail = await login('KTX', debug);
+      }
+    }
+  }
+}
+
 // Main menu
 async function main(options) {
   const debug = options.debug || false;
@@ -764,6 +1042,7 @@ async function main(options) {
     { name: '역 설정', value: 6 },
     { name: '역 직접 수정', value: 7 },
     { name: '예매 옵션 설정', value: 8 },
+    { name: chalk.magenta('[실험] N카드 할인 예매 (KTX)'), value: 10 },
     { name: '나가기', value: -1 },
   ];
 
@@ -801,6 +1080,7 @@ async function main(options) {
         case 6: await setStation(railType); break;
         case 7: await editStation(railType); break;
         case 8: await setOptions(); break;
+        case 10: await ncardReserve(debug); break;
       }
     } catch (e) {
       if (e.name === 'ExitPromptError' || e.message?.includes('User force closed')) {

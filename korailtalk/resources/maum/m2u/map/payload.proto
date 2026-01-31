@@ -1,0 +1,36 @@
+/**
+ * maum.ai M2U MAP protocol PAYLOAD 데이터
+ *
+ * namespace: maum.m2u.map
+ */
+syntax = "proto3";
+
+import "google/protobuf/struct.proto";
+
+package maum.m2u.map;
+
+/**
+ * RenderText 호출에 따르는 Payload
+ */
+message RenderTextPayload {
+  string text = 1;
+}
+
+
+// 기존 V1, V2 호환을 위해서 또는 디버그 목적으로 DA에서 내려주는 다양한 정보들을
+// 사용하도록 내려준다.
+// 이때 meta가 그대로 내려간다.
+message RenderHiddenPayload {
+  // 기존 V1, V2 호환을 위해서 또는 디버그 목적으로 DA에서 내려주는 다양한 정보들을
+  // 사용하도록 내려준다.
+  // 이때 meta가 그대로 내려간다.
+  google.protobuf.Struct meta = 1;
+}
+
+
+// 음성입력 대기에 필요한 추가적인 Payload 데이터
+message ExpectSpeechPayload {
+  // 입력 대기 시간, milli second
+  int32 timeout_in_milliseconds = 1;
+}
+

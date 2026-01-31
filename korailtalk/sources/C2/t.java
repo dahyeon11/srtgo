@@ -1,0 +1,14 @@
+package c2;
+
+import android.os.IInterface;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.android.gms.common.api.Status;
+
+/* loaded from: classes.dex */
+public interface t extends IInterface {
+    void zzc(GoogleSignInAccount googleSignInAccount, Status status);
+
+    void zze(Status status);
+
+    void zzf(Status status);
+}

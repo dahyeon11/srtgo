@@ -1,0 +1,34 @@
+package E6;
+
+/* loaded from: classes.dex */
+public abstract class d {
+    public static int abc_action_bar_home_description = 2131820545;
+    public static int abc_action_bar_up_description = 2131820546;
+    public static int abc_action_menu_overflow_description = 2131820547;
+    public static int abc_action_mode_done = 2131820548;
+    public static int abc_activity_chooser_view_see_all = 2131820549;
+    public static int abc_activitychooserview_choose_application = 2131820550;
+    public static int abc_capital_off = 2131820551;
+    public static int abc_capital_on = 2131820552;
+    public static int abc_search_hint = 2131820563;
+    public static int abc_searchview_description_clear = 2131820564;
+    public static int abc_searchview_description_query = 2131820565;
+    public static int abc_searchview_description_search = 2131820566;
+    public static int abc_searchview_description_submit = 2131820567;
+    public static int abc_searchview_description_voice = 2131820568;
+    public static int abc_shareactionprovider_share_with = 2131820569;
+    public static int abc_shareactionprovider_share_with_application = 2131820570;
+    public static int abc_toolbar_collapse_description = 2131820571;
+    public static int app_name = 2131820584;
+    public static int naveroauthlogin_string_getting_token = 2131821535;
+    public static int naveroauthlogin_string_group_id_not_available = 2131821536;
+    public static int naveroauthlogin_string_msg_naverapp_download_desc = 2131821537;
+    public static int naveroauthlogin_string_msg_naverapp_download_link = 2131821538;
+    public static int naveroauthlogin_string_network_state_not_available = 2131821539;
+    public static int naveroauthlogin_string_token_invalid = 2131821540;
+    public static int naveroauthlogin_string_update_naverapp = 2131821541;
+    public static int retry = 2131821898;
+    public static int search_menu_title = 2131821917;
+    public static int status_bar_notification_info_overflow = 2131821970;
+    public static int use_application = 2131822188;
+}

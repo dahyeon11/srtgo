@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="12.5dp">
+    <com.korail.talk.view.CTextView
+        android:textSize="17dp"
+        android:textColor="@color/color_ff0c3c60"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:text="@string/maas_service_suggest"
+        android:includeFontPadding="false"/>
+    <GridView
+        android:orientation="vertical"
+        android:id="@+id/gridview_maas_menu"
+        android:background="@drawable/rounded_rectangle_maas_menu"
+        android:paddingLeft="8dp"
+        android:paddingTop="6dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="6dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:numColumns="4"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="6dp"/>
+</LinearLayout>

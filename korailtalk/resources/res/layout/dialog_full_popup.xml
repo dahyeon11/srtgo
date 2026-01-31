@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_gravity="center_vertical"
+    android:orientation="vertical"
+    android:background="@color/white_two"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <include
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            layout="@layout/include_full_dialog_title"/>
+    </LinearLayout>
+    <LinearLayout
+        android:orientation="vertical"
+        android:id="@+id/content_container"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <TextView
+            android:textSize="15sp"
+            android:textColor="#020202"
+            android:background="#f3f3f3"
+            android:padding="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="환승역 선택"/>
+        <ListView
+            android:id="@+id/fdlv_select_station_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="#e1e1e1"
+            android:dividerHeight="1dp"
+            android:layout_weight="1"
+            android:overScrollMode="never"/>
+        <TextView
+            android:textSize="15sp"
+            android:textColor="#020202"
+            android:background="#f3f3f3"
+            android:padding="15dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="후행열차 종류 선택"/>
+        <ListView
+            android:id="@+id/fdlv_select_train_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="#e1e1e1"
+            android:dividerHeight="1dp"
+            android:layout_weight="1"
+            android:overScrollMode="never"/>
+    </LinearLayout>
+    <include layout="@layout/include_dialog_bottom"/>
+</LinearLayout>
